@@ -1,0 +1,246 @@
+name: Skill Validation
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  validate-cli-help:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout wayfinder-openclaw
+        uses: actions/checkout@v4
+        with:
+          path: wayfinder-openclaw
+
+      - name: Read pinned SDK version
+        id: sdk-version
+        run: |
+          SDK_COMMIT=$(cat wayfinder-openclaw/wayfinder/sdk-version.md | tr -d '[:space:]')
+          echo "commit=$SDK_COMMIT" >> "$GITHUB_OUTPUT"
+          echo "Pinned SDK ref: $SDK_COMMIT"
+
+      - name: Checkout wayfinder-paths-sdk
+        uses: actions/checkout@v4
+        with:
+          repository: WayfinderFoundation/wayfinder-paths-sdk
+          ref: ${{ steps.sdk-version.outputs.commit }}
+          path: wayfinder-paths-sdk
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: latest
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+
+      - name: Install dependencies
+        working-directory: wayfinder-paths-sdk
+        run: poetry install --no-interaction
+
+      - name: Generate CLI help output
+        working-directory: wayfinder-paths-sdk
+        run: |
+          mkdir -p ../wayfinder-openclaw/cli-help-output/commands
+          mkdir -p ../wayfinder-openclaw/cli-help-output/resources
+
+          echo "=== Generating command help ==="
+          poetry run wayfinder --help > ../wayfinder-openclaw/cli-help-output/commands/main-help.txt 2>&1 || true
+          poetry run wayfinder resource --help > ../wayfinder-openclaw/cli-help-output/commands/resource-help.txt 2>&1 || true
+          poetry run wayfinder quote_swap --help > ../wayfinder-openclaw/cli-help-output/commands/quote_swap-help.txt 2>&1 || true
+          poetry run wayfinder execute --help > ../wayfinder-openclaw/cli-help-output/commands/execute-help.txt 2>&1 || true
+          poetry run wayfinder hyperliquid --help > ../wayfinder-openclaw/cli-help-output/commands/hyperliquid-help.txt 2>&1 || true
+          poetry run wayfinder hyperliquid_execute --help > ../wayfinder-openclaw/cli-help-output/commands/hyperliquid_execute-help.txt 2>&1 || true
+          poetry run wayfinder run_strategy --help > ../wayfinder-openclaw/cli-help-output/commands/run_strategy-help.txt 2>&1 || true
+          poetry run wayfinder wallets --help > ../wayfinder-openclaw/cli-help-output/commands/wallets-help.txt 2>&1 || true
+          poetry run wayfinder run_script --help > ../wayfinder-openclaw/cli-help-output/commands/run_script-help.txt 2>&1 || true
+
+          echo "=== Generating resource list ==="
+          poetry run wayfinder resource --list > ../wayfinder-openclaw/cli-help-output/resources/resource-list.txt 2>&1 || true
+
+          echo "=== Generating static resource outputs ==="
+          # Static resources that don't require parameters
+          poetry run wayfinder resource wayfinder://adapters > ../wayfinder-openclaw/cli-help-output/resources/adapters.json 2>&1 || true
+          poetry run wayfinder resource wayfinder://strategies > ../wayfinder-openclaw/cli-help-output/resources/strategies.json 2>&1 || true
+          poetry run wayfinder resource wayfinder://hyperliquid/prices > ../wayfinder-openclaw/cli-help-output/resources/hyperliquid-prices.json 2>&1 || true
+          poetry run wayfinder resource wayfinder://hyperliquid/markets > ../wayfinder-openclaw/cli-help-output/resources/hyperliquid-markets.json 2>&1 || true
+          poetry run wayfinder resource wayfinder://hyperliquid/spot-assets > ../wayfinder-openclaw/cli-help-output/resources/hyperliquid-spot-assets.json 2>&1 || true
+
+          echo "=== Listing captured outputs ==="
+          find ../wayfinder-openclaw/cli-help-output -type f -exec echo "Captured: {}" \;
+
+      - name: Install Claude Code CLI
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Run Claude agent validation
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          claude --print --dangerously-skip-permissions "
+          You are validating the CLI help documentation for the wayfinder CLI tool.
+
+          Compare the following sources and identify any mismatches, inconsistencies, or issues:
+
+          1. **Actual CLI help output** - Located in wayfinder-openclaw/cli-help-output/
+             These are the actual --help outputs from the CLI commands.
+
+          2. **SKILL.md documentation** - Located at wayfinder-openclaw/wayfinder/SKILL.md
+             This is the skill documentation that describes CLI commands and their usage.
+
+          3. **skill.json definition** - Located at wayfinder-openclaw/wayfinder/skill.json
+             This defines the command structure and parameters.
+
+          4. **wayfinder-paths-sdk documentation** - Located in wayfinder-paths-sdk/
+             This repository contains path definitions and documentation that should align with the CLI.
+
+          IMPORTANT: The 'runner' command is intentionally undocumented and should be IGNORED in all checks.
+          Do NOT flag it as missing documentation. Exclude it completely from your analysis.
+
+          Please check for:
+          - Commands documented but not available in the CLI (excluding 'runner')
+          - Commands available in the CLI but not documented (excluding 'runner')
+          - Parameter mismatches (different names, types, or descriptions)
+          - Inconsistent descriptions between sources
+          - Missing or outdated examples
+          - Any other documentation drift
+
+          Output a structured report with:
+          1. Summary of findings - output exactly 'VALIDATION_RESULT: PASS' or 'VALIDATION_RESULT: FAIL' on its own line
+          2. Detailed list of issues found (if any)
+          3. Recommendations for fixes
+          " | tee validation-output.txt
+
+          # Check if validation passed or failed
+          if grep -q "VALIDATION_RESULT: FAIL" validation-output.txt; then
+            echo "::error::CLI help validation failed - see report above for details"
+            exit 1
+          elif grep -q "VALIDATION_RESULT: PASS" validation-output.txt; then
+            echo "CLI help validation passed"
+            exit 0
+          else
+            echo "::warning::Could not determine validation result - treating as failure"
+            exit 1
+          fi
+
+  validate-agent-skill:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout wayfinder-openclaw
+        uses: actions/checkout@v4
+
+      - name: Validate skill.json structure
+        working-directory: wayfinder
+        run: |
+          echo "=== Validating skill.json structure ==="
+
+          # Check skill.json is valid JSON
+          if ! jq empty skill.json 2>/dev/null; then
+            echo "ERROR: skill.json is not valid JSON"
+            exit 1
+          fi
+
+          # Check required fields exist
+          REQUIRED_FIELDS=("name" "version" "description" "entry" "commands")
+          for field in "${REQUIRED_FIELDS[@]}"; do
+            if ! jq -e ".$field" skill.json > /dev/null 2>&1; then
+              echo "ERROR: Required field '$field' missing from skill.json"
+              exit 1
+            fi
+          done
+
+          echo "✓ skill.json has valid structure with all required fields"
+
+      - name: Validate entry point exists
+        working-directory: wayfinder
+        run: |
+          echo "=== Validating entry point ==="
+          ENTRY=$(jq -r '.entry' skill.json)
+          if [ ! -f "$ENTRY" ]; then
+            echo "ERROR: Entry point '$ENTRY' does not exist"
+            exit 1
+          fi
+          echo "✓ Entry point '$ENTRY' exists"
+
+      - name: Validate references exist
+        working-directory: wayfinder
+        run: |
+          echo "=== Validating references ==="
+          REFERENCES=$(jq -r '.references[]?' skill.json 2>/dev/null)
+          if [ -z "$REFERENCES" ]; then
+            echo "No references defined, skipping"
+            exit 0
+          fi
+
+          MISSING=0
+          while IFS= read -r ref; do
+            if [ ! -f "$ref" ]; then
+              echo "ERROR: Reference '$ref' does not exist"
+              MISSING=1
+            else
+              echo "✓ Reference '$ref' exists"
+            fi
+          done <<< "$REFERENCES"
+
+          if [ $MISSING -eq 1 ]; then
+            exit 1
+          fi
+
+      - name: Install Claude Code CLI
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Run agent skill validation
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          claude --print --dangerously-skip-permissions "
+          You are validating the agent skill definition for the wayfinder OpenClaw skill.
+
+          Validate the following aspects of the skill:
+
+          1. **skill.json** - Located at wayfinder/skill.json
+             - Check that all commands listed are documented in SKILL.md
+             - Check that all resources (static and templates) are documented in SKILL.md
+             - Verify the version follows semver format
+
+          2. **SKILL.md** - Located at wayfinder/SKILL.md
+             - Verify all commands have proper documentation sections
+             - Check that parameter tables are complete for each command
+             - Verify error codes are documented
+             - Check that examples are provided for each command
+
+          3. **References** - Located in wayfinder/references/
+             - Verify each reference file listed in skill.json exists and has content
+             - Check that strategies and adapters referenced in SKILL.md are documented in references
+
+          4. **Cross-validation**
+             - Commands in skill.json must have corresponding sections in SKILL.md
+             - Resources in skill.json must be documented with usage examples
+             - No orphaned documentation (documented features that don't exist in skill.json)
+
+          Output a structured report with:
+          1. Summary - output exactly 'VALIDATION_RESULT: PASS' or 'VALIDATION_RESULT: FAIL' on its own line
+          2. Detailed findings for each category
+          3. Recommendations if any issues found
+          " | tee skill-validation-output.txt
+
+          # Check if validation passed or failed
+          if grep -q "VALIDATION_RESULT: FAIL" skill-validation-output.txt; then
+            echo "::error::Agent skill validation failed - see report above for details"
+            exit 1
+          elif grep -q "VALIDATION_RESULT: PASS" skill-validation-output.txt; then
+            echo "Agent skill validation passed"
+            exit 0
+          else
+            echo "::warning::Could not determine validation result - treating as failure"
+            exit 1
+          fi
