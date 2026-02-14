@@ -105,7 +105,13 @@ poetry run wayfinder resource wayfinder://balances/main
 
 All commands run from `$WAYFINDER_SDK_PATH`. Returns `{"ok": true, "result": {...}}` on success. For full parameter tables see [references/commands.md](references/commands.md).
 
-- **`resource`** — Read-only MCP resource queries (adapters, strategies, wallets, balances, tokens, Hyperliquid data). Always start here for lookups.
+- **`resource`** — Read-only MCP resource queries. Use this for all lookups before taking action: balances, token metadata, adapter info, strategies, wallets, Hyperliquid state, and more. Key resource URIs:
+  - `wayfinder://balances/<label>` — wallet balances across all chains
+  - `wayfinder://tokens/search/<chain>/<query>` — fuzzy search for a token (returns token IDs, addresses, decimals)
+  - `wayfinder://tokens/gas/<chain>` — native gas token for a chain (ETH, HYPE, MATIC, etc.)
+  - `wayfinder://tokens/resolve/<token_id>` — resolve a known token ID to full metadata
+  - `wayfinder://hyperliquid/<label>/state` — Hyperliquid account state + positions
+  - `wayfinder://adapters` / `wayfinder://strategies` / `wayfinder://wallets` — system info
   `poetry run wayfinder resource wayfinder://balances/main`
 
 - **`quote_swap`** — Get a swap/bridge quote via the BRAP aggregator (read-only, no on-chain effects). Supports same-chain swaps and cross-chain bridges across all supported networks. Always search token IDs first — never guess them. Returns the best route, expected output amount, gas estimate, and a ready-to-use `suggested_execute_request` you can pass straight into `execute`.
@@ -134,6 +140,34 @@ All commands run from `$WAYFINDER_SDK_PATH`. Returns `{"ok": true, "result": {..
 
 - **`run_script`** — Execute sandboxed Python scripts from `.wayfinder_runs/`.
   `poetry run wayfinder run_script --script_path .wayfinder_runs/my_flow.py --args '["--dry-run"]' --wallet_label main`
+
+## Token Lookup
+
+Token IDs are CoinGecko slugs with a chain suffix (e.g. `usd-coin-base`, `ethereum-arbitrum`). They are **not predictable** — `usdc-base` is wrong, `usd-coin-base` is right. **Always search first, never guess.**
+
+- **ERC20 tokens:** `poetry run wayfinder resource wayfinder://tokens/search/<chain>/<query>`
+- **Native gas tokens:** `poetry run wayfinder resource wayfinder://tokens/gas/<chain>`
+- **Resolve a known ID:** `poetry run wayfinder resource wayfinder://tokens/resolve/<token_id>` (only after searching)
+
+**If the user gives a contract address (or you're certain of it)**, use the chain-scoped address format directly — no search needed:
+`<chain_code>_<address>` e.g. `base_0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913`
+
+This works anywhere a token ID is accepted and is the most reliable way to reference a specific contract. Prefer this format when you already know the address from a previous lookup, reference docs, or the user.
+
+### Supported Chains
+
+| Chain | Code | Gas Token | Example Native ID |
+|-------|------|-----------|-------------------|
+| Ethereum | `ethereum` | ETH | `ethereum-ethereum` |
+| Base | `base` | ETH | `ethereum-base` |
+| Arbitrum | `arbitrum` | ETH | `ethereum-arbitrum` |
+| Polygon | `polygon` | POL | `polygon-ecosystem-token-polygon` |
+| BSC | `bsc` | BNB | `binancecoin-bsc` |
+| Avalanche | `avalanche` | AVAX | `avalanche-avalanche` |
+| Plasma | `plasma` | PLASMA | `plasma-plasma` |
+| HyperEVM | `hyperevm` | HYPE | `hyperliquid-hyperevm` |
+
+Note: `mainnet` is NOT a valid chain code — use `ethereum`. CLI commands use human-readable amounts (`--amount 500`); adapter scripts use raw int units (`500_000_000` for 500 USDC). For more detail see [references/tokens-and-pools.md](references/tokens-and-pools.md).
 
 ## Safety
 
