@@ -1,0 +1,69 @@
+{
+  "name": "wayfinder",
+  "version": "0.4.2",
+  "sdk_version": "main",
+  "description": "DeFi trading, yield strategies, and portfolio management via Wayfinder Paths CLI. Supports token swaps, perps, prediction markets, automated yield strategies, wallet management, and protocol adapters across Ethereum, Base, Arbitrum, Polygon, BSC, Avalanche, Plasma, and HyperEVM.",
+  "author": "Wayfinder Foundation",
+  "entry": "SKILL.md",
+  "runtime": "python",
+  "commands": [
+    "resource",
+    "quote_swap",
+    "execute",
+    "hyperliquid",
+    "hyperliquid_execute",
+    "polymarket",
+    "polymarket_execute",
+    "run_strategy",
+    "wallets",
+    "run_script"
+  ],
+  "resources": {
+    "resources": {
+      "static": [
+        { "name": "list_adapters", "uri": "wayfinder://adapters" },
+        { "name": "list_strategies", "uri": "wayfinder://strategies" },
+        { "name": "list_wallets", "uri": "wayfinder://wallets" },
+        { "name": "get_mid_prices", "uri": "wayfinder://hyperliquid/prices" },
+        { "name": "get_markets", "uri": "wayfinder://hyperliquid/markets" },
+        { "name": "get_spot_assets", "uri": "wayfinder://hyperliquid/spot-assets" }
+      ],
+      "templates": [
+        { "name": "describe_adapter", "uriTemplate": "wayfinder://adapters/{name}" },
+        { "name": "describe_strategy", "uriTemplate": "wayfinder://strategies/{name}" },
+        { "name": "get_wallet", "uriTemplate": "wayfinder://wallets/{label}" },
+        { "name": "get_wallet_balances", "uriTemplate": "wayfinder://balances/{label}" },
+        { "name": "get_wallet_activity", "uriTemplate": "wayfinder://activity/{label}" },
+        { "name": "resolve_token", "uriTemplate": "wayfinder://tokens/resolve/{query}" },
+        { "name": "get_gas_token", "uriTemplate": "wayfinder://tokens/gas/{chain_code}" },
+        { "name": "fuzzy_search_tokens", "uriTemplate": "wayfinder://tokens/search/{chain_code}/{query}" },
+        { "name": "get_user_state", "uriTemplate": "wayfinder://hyperliquid/{label}/state" },
+        { "name": "get_spot_user_state", "uriTemplate": "wayfinder://hyperliquid/{label}/spot" },
+        { "name": "get_mid_price", "uriTemplate": "wayfinder://hyperliquid/prices/{coin}" },
+        { "name": "get_orderbook", "uriTemplate": "wayfinder://hyperliquid/book/{coin}" }
+      ]
+    }
+  },
+  "references": [
+    "references/adapters.md",
+    "references/boros.md",
+    "references/ccxt.md",
+    "references/coding-interface.md",
+    "references/commands.md",
+    "references/errors.md",
+    "references/hyperlend.md",
+    "references/hyperliquid.md",
+    "references/moonwell.md",
+    "references/pendle.md",
+    "references/polymarket.md",
+    "references/projectx.md",
+    "references/setup.md",
+    "references/strategies.md",
+    "references/tokens-and-pools.md",
+    "references/uniswap.md"
+  ],
+  "permissions": {
+    "network": true,
+    "filesystem": true
+  }
+}
