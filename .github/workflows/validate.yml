@@ -12,15 +12,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout wayfinder-openclaw
+      - name: Checkout wayfinder-openclaw-skill
         uses: actions/checkout@v4
         with:
-          path: wayfinder-openclaw
+          path: wayfinder-openclaw-skill
 
       - name: Read pinned SDK version
         id: sdk-version
         run: |
-          SDK_COMMIT=$(cat wayfinder-openclaw/wayfinder/sdk-version.md | tr -d '[:space:]')
+          SDK_COMMIT=$(cat wayfinder-openclaw-skill/sdk-version.md | tr -d '[:space:]')
           echo "commit=$SDK_COMMIT" >> "$GITHUB_OUTPUT"
           echo "Pinned SDK ref: $SDK_COMMIT"
 
@@ -50,33 +50,33 @@ jobs:
       - name: Generate CLI help output
         working-directory: wayfinder-paths-sdk
         run: |
-          mkdir -p ../wayfinder-openclaw/cli-help-output/commands
-          mkdir -p ../wayfinder-openclaw/cli-help-output/resources
+          mkdir -p ../wayfinder-openclaw-skill/cli-help-output/commands
+          mkdir -p ../wayfinder-openclaw-skill/cli-help-output/resources
 
           echo "=== Generating command help ==="
-          poetry run wayfinder --help > ../wayfinder-openclaw/cli-help-output/commands/main-help.txt 2>&1 || true
-          poetry run wayfinder resource --help > ../wayfinder-openclaw/cli-help-output/commands/resource-help.txt 2>&1 || true
-          poetry run wayfinder quote_swap --help > ../wayfinder-openclaw/cli-help-output/commands/quote_swap-help.txt 2>&1 || true
-          poetry run wayfinder execute --help > ../wayfinder-openclaw/cli-help-output/commands/execute-help.txt 2>&1 || true
-          poetry run wayfinder hyperliquid --help > ../wayfinder-openclaw/cli-help-output/commands/hyperliquid-help.txt 2>&1 || true
-          poetry run wayfinder hyperliquid_execute --help > ../wayfinder-openclaw/cli-help-output/commands/hyperliquid_execute-help.txt 2>&1 || true
-          poetry run wayfinder run_strategy --help > ../wayfinder-openclaw/cli-help-output/commands/run_strategy-help.txt 2>&1 || true
-          poetry run wayfinder wallets --help > ../wayfinder-openclaw/cli-help-output/commands/wallets-help.txt 2>&1 || true
-          poetry run wayfinder run_script --help > ../wayfinder-openclaw/cli-help-output/commands/run_script-help.txt 2>&1 || true
+          poetry run wayfinder --help > ../wayfinder-openclaw-skill/cli-help-output/commands/main-help.txt 2>&1 || true
+          poetry run wayfinder resource --help > ../wayfinder-openclaw-skill/cli-help-output/commands/resource-help.txt 2>&1 || true
+          poetry run wayfinder quote_swap --help > ../wayfinder-openclaw-skill/cli-help-output/commands/quote_swap-help.txt 2>&1 || true
+          poetry run wayfinder execute --help > ../wayfinder-openclaw-skill/cli-help-output/commands/execute-help.txt 2>&1 || true
+          poetry run wayfinder hyperliquid --help > ../wayfinder-openclaw-skill/cli-help-output/commands/hyperliquid-help.txt 2>&1 || true
+          poetry run wayfinder hyperliquid_execute --help > ../wayfinder-openclaw-skill/cli-help-output/commands/hyperliquid_execute-help.txt 2>&1 || true
+          poetry run wayfinder run_strategy --help > ../wayfinder-openclaw-skill/cli-help-output/commands/run_strategy-help.txt 2>&1 || true
+          poetry run wayfinder wallets --help > ../wayfinder-openclaw-skill/cli-help-output/commands/wallets-help.txt 2>&1 || true
+          poetry run wayfinder run_script --help > ../wayfinder-openclaw-skill/cli-help-output/commands/run_script-help.txt 2>&1 || true
 
           echo "=== Generating resource list ==="
-          poetry run wayfinder resource --list > ../wayfinder-openclaw/cli-help-output/resources/resource-list.txt 2>&1 || true
+          poetry run wayfinder resource --list > ../wayfinder-openclaw-skill/cli-help-output/resources/resource-list.txt 2>&1 || true
 
           echo "=== Generating static resource outputs ==="
           # Static resources that don't require parameters
-          poetry run wayfinder resource wayfinder://adapters > ../wayfinder-openclaw/cli-help-output/resources/adapters.json 2>&1 || true
-          poetry run wayfinder resource wayfinder://strategies > ../wayfinder-openclaw/cli-help-output/resources/strategies.json 2>&1 || true
-          poetry run wayfinder resource wayfinder://hyperliquid/prices > ../wayfinder-openclaw/cli-help-output/resources/hyperliquid-prices.json 2>&1 || true
-          poetry run wayfinder resource wayfinder://hyperliquid/markets > ../wayfinder-openclaw/cli-help-output/resources/hyperliquid-markets.json 2>&1 || true
-          poetry run wayfinder resource wayfinder://hyperliquid/spot-assets > ../wayfinder-openclaw/cli-help-output/resources/hyperliquid-spot-assets.json 2>&1 || true
+          poetry run wayfinder resource wayfinder://adapters > ../wayfinder-openclaw-skill/cli-help-output/resources/adapters.json 2>&1 || true
+          poetry run wayfinder resource wayfinder://strategies > ../wayfinder-openclaw-skill/cli-help-output/resources/strategies.json 2>&1 || true
+          poetry run wayfinder resource wayfinder://hyperliquid/prices > ../wayfinder-openclaw-skill/cli-help-output/resources/hyperliquid-prices.json 2>&1 || true
+          poetry run wayfinder resource wayfinder://hyperliquid/markets > ../wayfinder-openclaw-skill/cli-help-output/resources/hyperliquid-markets.json 2>&1 || true
+          poetry run wayfinder resource wayfinder://hyperliquid/spot-assets > ../wayfinder-openclaw-skill/cli-help-output/resources/hyperliquid-spot-assets.json 2>&1 || true
 
           echo "=== Listing captured outputs ==="
-          find ../wayfinder-openclaw/cli-help-output -type f -exec echo "Captured: {}" \;
+          find ../wayfinder-openclaw-skill/cli-help-output -type f -exec echo "Captured: {}" \;
 
       - name: Install Claude Code CLI
         run: npm install -g @anthropic-ai/claude-code
@@ -90,13 +90,13 @@ jobs:
 
           Compare the following sources and identify any mismatches, inconsistencies, or issues:
 
-          1. **Actual CLI help output** - Located in wayfinder-openclaw/cli-help-output/
+          1. **Actual CLI help output** - Located in wayfinder-openclaw-skill/cli-help-output/
              These are the actual --help outputs from the CLI commands.
 
-          2. **SKILL.md documentation** - Located at wayfinder-openclaw/wayfinder/SKILL.md
+          2. **SKILL.md documentation** - Located at wayfinder-openclaw-skill/SKILL.md
              This is the skill documentation that describes CLI commands and their usage.
 
-          3. **skill.json definition** - Located at wayfinder-openclaw/wayfinder/skill.json
+          3. **skill.json definition** - Located at wayfinder-openclaw-skill/skill.json
              This defines the command structure and parameters.
 
           4. **wayfinder-paths-sdk documentation** - Located in wayfinder-paths-sdk/
@@ -135,11 +135,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout wayfinder-openclaw
+      - name: Checkout wayfinder-openclaw-skill
         uses: actions/checkout@v4
 
       - name: Validate skill.json structure
-        working-directory: wayfinder
         run: |
           echo "=== Validating skill.json structure ==="
 
@@ -161,7 +160,6 @@ jobs:
           echo "✓ skill.json has valid structure with all required fields"
 
       - name: Validate entry point exists
-        working-directory: wayfinder
         run: |
           echo "=== Validating entry point ==="
           ENTRY=$(jq -r '.entry' skill.json)
@@ -172,7 +170,6 @@ jobs:
           echo "✓ Entry point '$ENTRY' exists"
 
       - name: Validate references exist
-        working-directory: wayfinder
         run: |
           echo "=== Validating references ==="
           REFERENCES=$(jq -r '.references[]?' skill.json 2>/dev/null)
@@ -207,18 +204,18 @@ jobs:
 
           Validate the following aspects of the skill:
 
-          1. **skill.json** - Located at wayfinder/skill.json
+          1. **skill.json** - Located at skill.json
              - Check that all commands listed are documented in SKILL.md
              - Check that all resources (static and templates) are documented in SKILL.md
              - Verify the version follows semver format
 
-          2. **SKILL.md** - Located at wayfinder/SKILL.md
+          2. **SKILL.md** - Located at SKILL.md
              - Verify all commands have proper documentation sections
              - Check that parameter tables are complete for each command
              - Verify error codes are documented
              - Check that examples are provided for each command
 
-          3. **References** - Located in wayfinder/references/
+          3. **References** - Located in references/
              - Verify each reference file listed in skill.json exists and has content
              - Check that strategies and adapters referenced in SKILL.md are documented in references
 

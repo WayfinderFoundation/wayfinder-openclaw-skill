@@ -91,8 +91,36 @@ poetry run wayfinder resource wayfinder://balances/main
 
 All commands run from `$WAYFINDER_SDK_PATH`. Returns `{"ok": true, "result": {...}}` on success. For full parameter tables see [references/commands.md](references/commands.md).
 
-- **`resource`** — Read-only MCP resource queries (adapters, strategies, wallets, balances, tokens, Hyperliquid data). Always start here for lookups.
+- **`resource`** — Read-only resource queries (adapters, strategies, wallets, balances, tokens, Hyperliquid data). Always start here for lookups.
   `poetry run wayfinder resource wayfinder://balances/main`
+
+  #### Static Resources
+
+  | Name | URI | Reference |
+  |------|-----|-----------|
+  | `list_adapters` | `wayfinder://adapters` | [adapters.md](references/adapters.md) |
+  | `list_strategies` | `wayfinder://strategies` | [strategies.md](references/strategies.md) |
+  | `list_wallets` | `wayfinder://wallets` | [setup.md](references/setup.md) |
+  | `get_mid_prices` | `wayfinder://hyperliquid/prices` | [hyperliquid.md](references/hyperliquid.md) |
+  | `get_markets` | `wayfinder://hyperliquid/markets` | [hyperliquid.md](references/hyperliquid.md) |
+  | `get_spot_assets` | `wayfinder://hyperliquid/spot-assets` | [hyperliquid.md](references/hyperliquid.md) |
+
+  #### Resource Templates
+
+  | Name | URI Template | Reference |
+  |------|-------------|-----------|
+  | `describe_adapter` | `wayfinder://adapters/{name}` | [adapters.md](references/adapters.md) |
+  | `describe_strategy` | `wayfinder://strategies/{name}` | [strategies.md](references/strategies.md) |
+  | `get_wallet` | `wayfinder://wallets/{wallet_label}` | [setup.md](references/setup.md) |
+  | `get_wallet_balances` | `wayfinder://balances/{wallet_label}` | [tokens-and-pools.md](references/tokens-and-pools.md) |
+  | `get_wallet_activity` | `wayfinder://activity/{wallet_label}` | [commands.md](references/commands.md) |
+  | `resolve_token` | `wayfinder://tokens/resolve/{query}` | [tokens-and-pools.md](references/tokens-and-pools.md) |
+  | `get_gas_token` | `wayfinder://tokens/gas/{chain_code}` | [tokens-and-pools.md](references/tokens-and-pools.md) |
+  | `fuzzy_search_tokens` | `wayfinder://tokens/search/{chain_code}/{query}` | [tokens-and-pools.md](references/tokens-and-pools.md) |
+  | `get_user_state` | `wayfinder://hyperliquid/{wallet_label}/state` | [hyperliquid.md](references/hyperliquid.md) |
+  | `get_spot_user_state` | `wayfinder://hyperliquid/{wallet_label}/spot` | [hyperliquid.md](references/hyperliquid.md) |
+  | `get_mid_price` | `wayfinder://hyperliquid/prices/{coin}` | [hyperliquid.md](references/hyperliquid.md) |
+  | `get_orderbook` | `wayfinder://hyperliquid/book/{coin}` | [hyperliquid.md](references/hyperliquid.md) |
 
 - **`quote_swap`** — Get a swap/bridge quote (read-only, no on-chain effects). Always search token IDs first.
   `poetry run wayfinder quote_swap --wallet_label main --from_token usd-coin-base --to_token ethereum-base --amount 500`
