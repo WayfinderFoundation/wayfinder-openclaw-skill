@@ -6,7 +6,7 @@ Hyperliquid is a decentralized perpetuals exchange with spot trading. The Hyperl
 
 - **Type**: `HYPERLIQUID`
 - **Module**: `wayfinder_paths.adapters.hyperliquid_adapter.adapter.HyperliquidAdapter`
-- **Capabilities**: `market.read`, `market.meta`, `market.funding`, `market.candles`, `market.orderbook`, `order.execute`, `order.cancel`, `position.manage`, `transfer`, `withdraw`
+- **Capabilities**: `market.read`, `market.meta`, `market.funding`, `market.candles`, `market.orderbook`, `order.execute`, `order.cancel`, `order.trigger`, `position.manage`, `position.isolated_margin`, `transfer`, `transfer.spot`, `transfer.hypercore_to_hyperevm`, `withdraw`
 
 ## Market Data (via Resources)
 
@@ -43,14 +43,25 @@ poetry run wayfinder resource wayfinder://hyperliquid/book/ETH
 | `get_meta_and_asset_ctxs()` | Perp market metadata + contexts (enumerate markets, map asset_id↔coin) |
 | `get_spot_meta()` | Spot metadata (tokens + universe pairs) |
 | `get_spot_assets()` | Spot asset mapping (e.g. `{"HYPE/USDC": 10107}`) |
-| `get_l2_book(coin)` | Perp/spot order book by coin string |
+| `get_spot_asset_id(base_coin, quote_coin="USDC")` | Look up spot asset ID from pair name |
+| `get_all_mid_prices()` | All mid prices as `dict[str, float]` |
+| `get_l2_book(coin, n_levels=20)` | Perp/spot order book by coin string |
 | `get_spot_l2_book(spot_asset_id)` | Spot order book by asset ID |
-| `get_user_state(address)` | Perp account state |
+| `get_user_state(address)` | Perp account state (aggregated across dexes) |
 | `get_spot_user_state(address)` | Spot balances |
-| `get_open_orders(address)` | Open orders |
-| `get_frontend_open_orders(address)` | Open + trigger orders |
+| `get_full_user_state(*, account, include_spot=True, include_open_orders=True)` | Aggregated state: perp + spot + open orders in one call |
+| `get_margin_table(margin_table_id)` | Margin table data (cached 24h) |
+| `get_open_orders(address)` | Open orders (delegates to `get_frontend_open_orders`) |
+| `get_frontend_open_orders(address)` | Open + trigger orders (aggregated across dexes) |
 | `get_user_fills(address)` | Recent fills |
+| `check_recent_liquidations(address, since_ms)` | Filter fills for liquidation events where user was liquidated |
 | `get_order_status(address, order_id)` | Single order status |
+| `get_user_deposits(address, from_timestamp_ms)` | Deposit ledger entries since timestamp |
+| `get_user_withdrawals(address, from_timestamp_ms)` | Withdrawal ledger entries since timestamp |
+| `hypercore_get_token_metadata(token_address)` | Resolve spot token metadata by EVM address (0-address → HYPE) |
+| `get_perp_margin_amount(user_state)` | Extract account value from user state dict |
+| `get_valid_order_size(asset_id, size)` | Quantize size to valid step for the asset |
+| `max_transferable_amount(total, hold, *, sz_decimals, leave_one_tick=True)` | Compute max transferable (static utility) |
 
 ### Funding History
 
@@ -198,6 +209,53 @@ poetry run wayfinder hyperliquid_execute --action update_leverage --wallet_label
   --coin ETH --leverage 5 --no-is_cross
 ```
 
+### Trigger Orders (Take-Profit / Stop-Loss)
+
+Via scripts, use `place_trigger_order()` for both take-profit and stop-loss:
+
+```python
+adapter = get_adapter(HyperliquidAdapter, "main")
+
+# Stop loss (market execution when trigger price hit)
+ok, result = await adapter.place_trigger_order(
+    asset_id=3,  # ETH
+    is_buy=True,  # buy back to close a short
+    trigger_price=3500.0,
+    size=0.1,
+    address="0x...",
+    tpsl="sl",
+    is_market=True,
+)
+
+# Take profit with limit price
+ok, result = await adapter.place_trigger_order(
+    asset_id=3,
+    is_buy=False,
+    trigger_price=4000.0,
+    size=0.1,
+    address="0x...",
+    tpsl="tp",
+    is_market=False,
+    limit_price=3990.0,
+)
+```
+
+Trigger orders are always `reduce_only=True`. The convenience wrapper `place_stop_loss()` calls `place_trigger_order` with `tpsl="sl"` and `is_market=True`.
+
+### Isolated Margin Management
+
+Add or remove USDC margin on an existing isolated position:
+
+```python
+# Add $50 margin to an isolated ETH position
+ok, result = await adapter.update_isolated_margin(asset_id=3, delta_usdc=50.0, address="0x...")
+
+# Remove $20 margin
+ok, result = await adapter.update_isolated_margin(asset_id=3, delta_usdc=-20.0, address="0x...")
+```
+
+Positive `delta_usdc` = add margin, negative = remove.
+
 ### Cancel Orders
 
 ```bash
@@ -224,9 +282,32 @@ poetry run wayfinder hyperliquid_execute --action spot_to_perp_transfer --wallet
 poetry run wayfinder hyperliquid_execute --action perp_to_spot_transfer --wallet_label main --amount_usdc 50
 ```
 
-> **Note:** Other internal transfers (HyperCore→HyperEVM, arbitrary spot transfers) require a custom script via the [coding interface](coding-interface.md).
+### HyperCore → HyperEVM Transfers (via scripts)
 
-Available adapter methods for scripting: `transfer_spot_to_perp()`, `transfer_perp_to_spot()`, `spot_transfer()`, `hypercore_to_hyperevm()`.
+Transfer spot tokens from HyperCore to HyperEVM using the built-in `hypercore_to_hyperevm()` method:
+
+```python
+from wayfinder_paths.mcp.scripting import get_adapter
+from wayfinder_paths.adapters.hyperliquid_adapter import HyperliquidAdapter
+
+adapter = get_adapter(HyperliquidAdapter, "main")
+
+# Transfer HYPE (token_address=None or 0x0 means HYPE)
+ok, result = await adapter.hypercore_to_hyperevm(amount=1.0, address="0x...", token_address=None)
+
+# Transfer any spot token by EVM address
+ok, result = await adapter.hypercore_to_hyperevm(amount=100.0, address="0x...", token_address="0xTokenAddr")
+```
+
+### Arbitrary Spot Transfers (via scripts)
+
+Transfer any spot token to another address:
+
+```python
+ok, result = await adapter.spot_transfer(amount=1.0, destination="0xRecipient", token="HYPE:150", address="0x...")
+```
+
+The `token` parameter uses `"NAME:tokenId"` format. Use `hypercore_get_token_metadata(token_address)` to resolve the correct token string.
 
 
 ### Deposit USDC to Hyperliquid
@@ -275,14 +356,21 @@ When a user says "$X at Yx leverage", clarify intent:
 
 | Method | Purpose |
 |--------|---------|
-| `place_market_order(asset_id, is_buy, slippage, size, ...)` | Market order |
-| `place_limit_order(asset_id, is_buy, price, size, ...)` | Limit order |
-| `place_stop_loss(asset_id, is_buy, trigger_price, size, ...)` | Stop loss |
-| `cancel_order(asset_id, order_id, ...)` | Cancel by order ID |
-| `cancel_order_by_cloid(asset_id, cloid, ...)` | Cancel by client order ID |
-| `update_leverage(asset_id, leverage, is_cross, ...)` | Set leverage + margin mode |
-| `approve_builder_fee(builder, max_fee_rate, ...)` | Approve builder fee |
-| `withdraw(amount, address)` | USDC withdraw to Arbitrum |
+| `place_market_order(asset_id, is_buy, slippage, size, address, *, reduce_only=False, cloid=None, builder=None)` | Market order (IOC) |
+| `place_limit_order(asset_id, is_buy, price, size, address, *, reduce_only=False, builder=None, cloid=None)` | Limit order (GTC) |
+| `place_trigger_order(asset_id, is_buy, trigger_price, size, address, tpsl, is_market=True, limit_price=None, builder=None)` | Trigger order — take-profit (`tpsl="tp"`) or stop-loss (`tpsl="sl"`). Always `reduce_only=True`. |
+| `place_stop_loss(asset_id, is_buy, trigger_price, size, address)` | Stop loss (convenience wrapper around `place_trigger_order` with `tpsl="sl"`) |
+| `cancel_order(asset_id, order_id, address)` | Cancel by order ID |
+| `cancel_order_by_cloid(asset_id, cloid, address)` | Cancel by client order ID (looks up oid from open orders first) |
+| `update_leverage(asset_id, leverage, is_cross, address)` | Set leverage + margin mode |
+| `update_isolated_margin(asset_id, delta_usdc, address)` | Add/remove USDC margin on an isolated position. Positive = add, negative = remove. |
+| `withdraw(*, amount, address)` | USDC withdraw to Arbitrum (keyword-only) |
+| `spot_transfer(*, amount, destination, token, address)` | Transfer spot tokens to another address |
+| `hypercore_to_hyperevm(*, amount, address, token_address=None)` | Transfer spot token from HyperCore to HyperEVM. `token_address=None` or `0x0` = HYPE. |
+| `transfer_spot_to_perp(amount, address)` | Move USDC from spot wallet to perp wallet |
+| `transfer_perp_to_spot(amount, address)` | Move USDC from perp wallet to spot wallet |
+| `approve_builder_fee(builder, max_fee_rate, address)` | Approve builder fee |
+| `set_dex_abstraction(address, enabled)` | Enable/disable dex abstraction (required for order placement) |
 
 ### Builder Fee
 
@@ -323,3 +411,7 @@ Spot orders don't use leverage — `usd_amount` is always treated as notional. `
 - **USD sizing ambiguity**: When a user says "$X at Yx leverage", always clarify if $X is notional (position size) or margin (collateral). See the Sizing table above.
 - **Builder fee approvals**: Builder fees are opt-in per user/builder pair. Fee value `f` is in **tenths of a basis point** (e.g. `30` = 0.030%). The CLI auto-approves if needed.
 - **Funding history**: There is no `HyperliquidAdapter.get_funding_history()` — use `HyperliquidDataClient` or the SDK's `Info.funding_history()` directly.
+- **Dex abstraction**: Order placement auto-enables dex abstraction via `ensure_dex_abstraction()`. If you see "dex abstraction not enabled" errors, call `set_dex_abstraction(address, True)` manually.
+- **Liquidation detection**: Use `check_recent_liquidations(address, since_ms)` to filter fills where the user was the liquidated party. Returns only fills with `liquidation.liquidatedUser == address`.
+- **`get_full_user_state()` is keyword-only**: Call as `get_full_user_state(account="0x...", include_spot=True, include_open_orders=True)`. Returns aggregated perp + spot + open orders in one call.
+- **HyperCore→HyperEVM token resolution**: `hypercore_to_hyperevm()` resolves tokens by EVM address via spot metadata. Pass `token_address=None` or `"0x0000..."` for HYPE (index 150).

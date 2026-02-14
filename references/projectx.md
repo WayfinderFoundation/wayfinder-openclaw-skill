@@ -97,6 +97,11 @@ asyncio.run(main())
 | `increase_liquidity_balanced(...)` | Increase liquidity after balancing | Uses pool tick spacing |
 | `burn_position(token_id)` | Remove liquidity + collect + burn | Does not require `pool_address` |
 | `swap_exact_in(from_token, to_token, amount_in, slippage_bps=...)` | Swap exact-in | Routes automatically |
+| `live_fee_snapshot(token_id)` | Claimable fees for position with USD value | Requires `pool_address` |
+| `find_pool_for_pair(token_a, token_b, *, prefer_fees=None)` | Resolve pool address for token pair | Read-only |
+| `price_band_for_ticks(tick_lower, tick_upper)` | Price range for tick band with decimals | Requires `pool_address` |
+| `classify_range_state(ticks, tick_lower, tick_upper, fallback_tick=None)` | Classify position: `in_range`, `out_of_range`, `entering_out_of_range` | Static utility |
+| `recent_swaps(limit=10)` | Recent swaps (convenience wrapper) | Requires `pool_address` |
 
 ## Strategy Note
 

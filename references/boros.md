@@ -6,7 +6,7 @@ Boros provides fixed-rate markets on Arbitrum. It allows locking in a fixed fund
 
 - **Type**: `BOROS`
 - **Module**: `wayfinder_paths.adapters.boros_adapter.adapter.BorosAdapter`
-- **Capabilities**: `market.read`, `market.quote`, `position.open`, `position.close`, `collateral.deposit`, `collateral.withdraw`
+- **Capabilities**: `market.read`, `market.quote`, `market.search`, `position.open`, `position.close`, `collateral.deposit`, `collateral.withdraw`, `collateral.transfer`, `bridge.hype_oft`
 
 ## Market Data
 
@@ -69,9 +69,12 @@ All BorosAdapter methods return `tuple[bool, result]` — always unpack. All fie
 | `get_orderbook(market_id, tick_size)` | Raw orderbook snapshot | Slippage estimation |
 | `get_assets()` / `get_asset_by_token_id(token_id)` | Collateral asset addresses and metadata | Token address lookups |
 | `list_available_underlyings(active_only)` | Unique underlying symbols with market counts | What's tradeable |
+| `list_available_platforms(*, active_only=True)` | Available trading platforms | Platform discovery |
+| `search_markets(*, collateral=None, asset=None, platform=None, active_only=True)` | Search markets with combined filters | Targeted queries |
 | `list_markets_by_collateral(token_id)` | Filter markets by collateral type | Collateral-specific queries |
 | `get_enriched_market(market_id)` | Single market with all metadata joined | Full market context |
 | `get_market_history(market_id, time_frame)` | OHLCV + rate history (`5m`, `1h`, `1d`, `1w`) | Historical analysis |
+| `get_cash_fee_data(*, token_id)` | Read MarketHub.getCashFeeData from chain | Min cross cash requirements |
 
 ### Quote Fields (BorosMarketQuote)
 
@@ -89,8 +92,9 @@ All BorosAdapter methods return `tuple[bool, result]` — always unpack. All fie
 | `get_active_positions()` | Existing rate positions |
 | `get_account_balances(token_id)` | Collateral summary (isolated/cross/total) |
 | `get_collaterals()` | Full raw collateral data |
-| `get_open_limit_orders()` | Pending limit orders |
+| `get_open_limit_orders(*, limit=50)` | Pending limit orders |
 | `get_withdrawal_status()` / `get_pending_withdrawal_amount()` | Withdrawal state |
+| `get_full_user_state(*, account=None, account_id=None, token_id=3, ...)` | Full Boros state snapshot: positions + balances + orders + withdrawals |
 
 **Why check first:** Avoid duplicate positions, unnecessary deposits, or trading with pending withdrawals.
 
@@ -114,6 +118,45 @@ Each market accepts a specific collateral — check `market["tokenId"]` to know 
 | HYPE (token_id=5) | 1 YU = 1 HYPE | `size_yu = 50 / hype_price` |
 
 **Do NOT** set `target_yu = deposit_amount` — collateral does not cap YU 1:1. Max YU is determined by the margin formula. Apply a safety buffer (e.g., 50-70% of theoretical max) to avoid liquidation.
+
+## Execution Methods
+
+| Method | Purpose |
+|--------|---------|
+| `deposit_to_cross_margin(...)` | Deposit collateral to cross margin |
+| `withdraw_collateral(...)` | Withdraw collateral (two-step: request → cooldown → finalize) |
+| `finalize_vault_withdrawal(...)` | Finalize a pending vault withdrawal after cooldown |
+| `cash_transfer(...)` | Transfer cash between cross/isolated margin |
+| `sweep_isolated_to_cross(*, token_id, market_id=None)` | Sweep isolated cash to cross margin |
+| `place_rate_order(...)` | Place a limit rate order |
+| `close_positions_market(...)` | Close all positions in a market |
+| `close_positions_except(...)` | Close all positions except specified ones |
+| `ensure_position_size_yu(...)` | Ensure position reaches target YU size |
+| `cancel_orders(...)` | Cancel open limit orders |
+
+### Tick Math Utilities
+
+| Method | Purpose |
+|--------|---------|
+| `tick_from_rate(rate, tick_step, *, round_down)` | Convert APR decimal to Boros `limitTick` |
+| `rate_from_tick(tick, tick_step)` | Convert `limitTick` to APR decimal |
+| `normalize_apr(value)` | Normalize various APR encodings (e.g. `"1.5%"`, `150`, `0.015`) to decimal |
+
+### HYPE OFT Bridge
+
+Bridge HYPE between HyperEVM and Arbitrum via LayerZero OFT:
+
+```python
+adapter = get_adapter(BorosAdapter, "main")
+
+# HyperEVM → Arbitrum
+ok, result = await adapter.bridge_hype_oft_hyperevm_to_arbitrum(...)
+
+# Arbitrum → HyperEVM
+ok, result = await adapter.bridge_hype_oft_arbitrum_to_hyperevm(...)
+```
+
+OFT bridge requires `msg.value = amount + fee`. Amounts must be rounded to the contract's `decimalConversionRate()`.
 
 ## Rate Locking Flow
 

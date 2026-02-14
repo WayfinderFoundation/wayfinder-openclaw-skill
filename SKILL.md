@@ -8,6 +8,20 @@ metadata: {"openclaw":{"emoji":"🧭","homepage":"https://github.com/WayfinderFo
 
 DeFi trading, yield strategies, and portfolio management powered by [poetry run wayfinder Paths](https://github.com/WayfinderFoundation/wayfinder-paths-sdk).
 
+## Conversation Style
+
+Talk like a knowledgeable DeFi native, not like a tool manual. When a user asks about a token, protocol, or yield opportunity:
+
+- **Lead with what matters to them** — what the thing is, how the yield works, what the risks are — in plain language. Don't open with adapter method signatures, API endpoint paths, or return types.
+- **Weave commands in naturally** — present Wayfinder actions as "here's how to do it" steps, not as the main content. A swap should feel like "let me grab you a quote" not "calling the quote_swap CLI tool with parameters..."
+- **Skip the plumbing** — never surface internal details like adapter module paths, `tuple[bool, Any]` return types, signing callbacks, or cache TTLs in conversation. Those exist for scripting, not chat.
+- **Be direct about risks** — smart-contract risk, impermanent loss, liquidation thresholds, liquidity depth. If a pool is thin or a protocol is new, say so.
+- **Don't invent data** — if you haven't fetched a rate, price, or APY, don't quote one. Fetch it first, then report what the chain says.
+- **Never assume amounts** — don't pick dollar amounts, token quantities, or position sizes on the user's behalf. Always ask how much they want to deposit, swap, bridge, or trade. "How much do you want to bridge?" not "I'll bridge $25 for you."
+- **Show results cleanly** — when you run commands, translate raw JSON into readable summaries (see [references/adapters.md](references/adapters.md) § Presenting Adapter Data). Users want "$1,200 USDC on Base" not `{"balance_raw": 1200000000, "decimals": 6}`.
+
+The goal: a user should feel like they're talking to someone who deeply understands DeFi and happens to have a terminal open — not like they're reading API documentation.
+
 ## Pre-Flight Check
 
 Before running any commands, verify that poetry run wayfinder Paths is installed and reachable:
@@ -91,25 +105,31 @@ poetry run wayfinder resource wayfinder://balances/main
 
 All commands run from `$WAYFINDER_SDK_PATH`. Returns `{"ok": true, "result": {...}}` on success. For full parameter tables see [references/commands.md](references/commands.md).
 
-- **`resource`** — Read-only MCP resource queries (adapters, strategies, wallets, balances, tokens, Hyperliquid data). Always start here for lookups.
+- **`resource`** — Read-only MCP resource queries. Use this for all lookups before taking action: balances, token metadata, adapter info, strategies, wallets, Hyperliquid state, and more. Key resource URIs:
+  - `wayfinder://balances/<label>` — wallet balances across all chains
+  - `wayfinder://tokens/search/<chain>/<query>` — fuzzy search for a token (returns token IDs, addresses, decimals)
+  - `wayfinder://tokens/gas/<chain>` — native gas token for a chain (ETH, HYPE, MATIC, etc.)
+  - `wayfinder://tokens/resolve/<token_id>` — resolve a known token ID to full metadata
+  - `wayfinder://hyperliquid/<label>/state` — Hyperliquid account state + positions
+  - `wayfinder://adapters` / `wayfinder://strategies` / `wayfinder://wallets` — system info
   `poetry run wayfinder resource wayfinder://balances/main`
 
-- **`quote_swap`** — Get a swap/bridge quote (read-only, no on-chain effects). Always search token IDs first.
+- **`quote_swap`** — Get a swap/bridge quote via the BRAP aggregator (read-only, no on-chain effects). Supports same-chain swaps and cross-chain bridges across all supported networks. Always search token IDs first — never guess them. Returns the best route, expected output amount, gas estimate, and a ready-to-use `suggested_execute_request` you can pass straight into `execute`.
   `poetry run wayfinder quote_swap --wallet_label main --from_token usd-coin-base --to_token ethereum-base --amount 500`
 
-- **`execute`** — Execute swaps, sends, or Hyperliquid deposits. **Live — confirm with user first.**
+- **`execute`** — Execute on-chain transactions. Supports three kinds: `swap` (token swaps and cross-chain bridges via BRAP), `send` (transfer tokens to another address — use `token: "native"` + `chain_id` for native gas sends), and `hyperliquid_deposit` (bridge USDC to Hyperliquid L1 — minimum 5 USDC or funds are lost). A tx hash does NOT mean success — the SDK waits for the receipt and raises on revert. **Live — confirm with user first.** For full parameter details see [references/commands.md](references/commands.md).
   `poetry run wayfinder execute --kind swap --wallet_label main --from_token usd-coin-base --to_token ethereum-base --amount 500`
 
-- **`hyperliquid`** — Wait for Hyperliquid deposits/withdrawals to settle. Use `resource` for read-only queries.
+- **`hyperliquid`** — Wait for Hyperliquid deposits or withdrawals to settle before proceeding. Use `resource wayfinder://hyperliquid/...` for read-only queries (account state, positions, funding rates, order books, mid prices, candles). For full Hyperliquid capabilities see [references/hyperliquid.md](references/hyperliquid.md).
   `poetry run wayfinder hyperliquid --action wait_for_deposit --wallet_label main --expected_increase 100`
 
-- **`hyperliquid_execute`** — Place/cancel orders, update leverage, withdraw USDC. **Live — confirm with user first.**
+- **`hyperliquid_execute`** — Trade perps and spot on Hyperliquid. Actions: `place_order` (market/limit), `cancel_order`, `cancel_all_orders`, `update_leverage` (cross or isolated), `update_isolated_margin`, `place_trigger_order` (TP/SL — always reduce-only), `withdraw` (USDC back to Arbitrum), `spot_transfer`, `hypercore_to_hyperevm`. Supports `--usd_amount_kind margin` (collateral) vs `notional` (position size) — clarify with the user which they mean. **Live — confirm with user first.** For full parameter details see [references/hyperliquid.md](references/hyperliquid.md).
   `poetry run wayfinder hyperliquid_execute --action place_order --wallet_label main --coin ETH --is_buy true --usd_amount 200 --usd_amount_kind margin --leverage 5`
 
-- **`polymarket`** — Read-only Polymarket queries (search, status, order books, prices).
+- **`polymarket`** — Read-only Polymarket queries. Actions: `search` (find markets by keyword), `status` (wallet positions, balances, open orders, PnL breakdown), `order_book` (bids/asks for a market), `prices` (current YES/NO prices), `candles` (price history). For full capabilities see [references/polymarket.md](references/polymarket.md).
   `poetry run wayfinder polymarket --action search --query "bitcoin above 100k" --limit 5`
 
-- **`polymarket_execute`** — Polymarket bridging and trading. **Live — confirm with user first.**
+- **`polymarket_execute`** — Trade prediction markets on Polymarket. Actions: `bridge_deposit` / `bridge_withdraw` (move USDC between Polygon wallet and Polymarket), `buy` / `sell` (market orders on YES/NO outcomes), `place_limit_order`, `cancel_order`, `cancel_all`, `redeem` (claim winnings from resolved markets). Polymarket uses Polygon USDC — bridge funds in first. **Live — confirm with user first.** For full parameter details see [references/polymarket.md](references/polymarket.md).
   `poetry run wayfinder polymarket_execute --action buy --wallet_label main --market_slug "some-slug" --outcome YES --amount_usdc 2`
 
 - **`run_strategy`** — Strategy lifecycle: status, analyze, quote, deposit, update, withdraw, exit.
@@ -120,6 +140,34 @@ All commands run from `$WAYFINDER_SDK_PATH`. Returns `{"ok": true, "result": {..
 
 - **`run_script`** — Execute sandboxed Python scripts from `.wayfinder_runs/`.
   `poetry run wayfinder run_script --script_path .wayfinder_runs/my_flow.py --args '["--dry-run"]' --wallet_label main`
+
+## Token Lookup
+
+Token IDs are CoinGecko slugs with a chain suffix (e.g. `usd-coin-base`, `ethereum-arbitrum`). They are **not predictable** — `usdc-base` is wrong, `usd-coin-base` is right. **Always search first, never guess.**
+
+- **ERC20 tokens:** `poetry run wayfinder resource wayfinder://tokens/search/<chain>/<query>`
+- **Native gas tokens:** `poetry run wayfinder resource wayfinder://tokens/gas/<chain>`
+- **Resolve a known ID:** `poetry run wayfinder resource wayfinder://tokens/resolve/<token_id>` (only after searching)
+
+**If the user gives a contract address (or you're certain of it)**, use the chain-scoped address format directly — no search needed:
+`<chain_code>_<address>` e.g. `base_0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913`
+
+This works anywhere a token ID is accepted and is the most reliable way to reference a specific contract. Prefer this format when you already know the address from a previous lookup, reference docs, or the user.
+
+### Supported Chains
+
+| Chain | Code | Gas Token | Example Native ID |
+|-------|------|-----------|-------------------|
+| Ethereum | `ethereum` | ETH | `ethereum-ethereum` |
+| Base | `base` | ETH | `ethereum-base` |
+| Arbitrum | `arbitrum` | ETH | `ethereum-arbitrum` |
+| Polygon | `polygon` | POL | `polygon-ecosystem-token-polygon` |
+| BSC | `bsc` | BNB | `binancecoin-bsc` |
+| Avalanche | `avalanche` | AVAX | `avalanche-avalanche` |
+| Plasma | `plasma` | PLASMA | `plasma-plasma` |
+| HyperEVM | `hyperevm` | HYPE | `hyperliquid-hyperevm` |
+
+Note: `mainnet` is NOT a valid chain code — use `ethereum`. CLI commands use human-readable amounts (`--amount 500`); adapter scripts use raw int units (`500_000_000` for 500 USDC). For more detail see [references/tokens-and-pools.md](references/tokens-and-pools.md).
 
 ## Safety
 

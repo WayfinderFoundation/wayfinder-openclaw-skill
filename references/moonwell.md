@@ -25,7 +25,8 @@ poetry run wayfinder wallets --action discover_portfolio --wallet_label main --p
 | `get_apy(mtoken, apy_type, include_rewards)` | Supply/borrow APY | No |
 | `get_collateral_factor(mtoken)` | Collateral factor (e.g. 0.88) | No |
 | `get_pos(mtoken, account?, include_usd?)` | Single market position | Yes (or pass account) |
-| `get_full_user_state(account?, include_rewards?, include_usd?, include_apy?)` | All positions + rewards | Yes (or pass account) |
+| `get_full_user_state(account?, include_rewards?, include_usd?, include_apy?, include_zero_positions?)` | All positions + rewards | Yes (or pass account) |
+| `get_all_markets(...)` | All Moonwell markets with metadata | No |
 | `is_market_entered(mtoken, account?)` | Check if collateral enabled | Yes (or pass account) |
 | `get_borrowable_amount(account?)` | Account liquidity (USD) | Yes (or pass account) |
 | `max_withdrawable_mtoken(mtoken, account?)` | Max withdraw without liquidation | Yes (or pass account) |
