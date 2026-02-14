@@ -11,8 +11,10 @@
 # Topics:
 #   strategies   Developing Wayfinder strategies (workflow, manifests, safety, data sources)
 #   setup        First-time SDK setup
+#   adapters     Adapter overview (protocol integrations, composing adapters)
 #   boros        Boros adapter (fixed-rate markets, rate locking, funding swaps)
-#   brap         BRAP adapter (cross-chain swaps and bridges)
+#   ccxt         CCXT adapter (centralized exchanges, multi-exchange factory)
+#   coding       Coding interface (custom Python scripts for complex DeFi ops)
 #   hyperlend    HyperLend adapter (HyperEVM lending)
 #   hyperliquid  Hyperliquid adapter (perps, spot, deposits/withdrawals)
 #   polymarket   Polymarket adapter (prediction markets, trading, bridging)
@@ -30,8 +32,8 @@ RESTORE_REF=""
 
 # Check for sdk-version.md file
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-SDK_VERSION_FILE="$SCRIPT_DIR/../sdk-version.md"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+SDK_VERSION_FILE="$REPO_ROOT/sdk-version.md"
 
 if [[ -f "$SDK_VERSION_FILE" ]]; then
     SDK_COMMIT="$(tr -d '[:space:]' < "$SDK_VERSION_FILE")"
@@ -96,10 +98,12 @@ fi
 
 # --- Topic → directory mapping ---
 declare -A TOPIC_MAP=(
+    [adapters]="using-adapters"
     [strategies]="developing-wayfinder-strategies"
     [setup]="setup"
     [boros]="using-boros-adapter"
-    [brap]="using-brap-adapter"
+    [ccxt]="using-ccxt-adapter"
+    [coding]="coding-interface"
     [hyperlend]="using-hyperlend-adapter"
     [hyperliquid]="using-hyperliquid-adapter"
     [polymarket]="using-polymarket-adapter"
@@ -166,10 +170,12 @@ show_topic() {
 show_list() {
     echo "Available topics:"
     echo ""
+    echo "  adapters     Adapter overview (protocol integrations, composing adapters)"
     echo "  strategies   Developing Wayfinder strategies (workflow, manifests, safety, data sources)"
     echo "  setup        First-time SDK setup"
     echo "  boros        Boros adapter (fixed-rate markets, rate locking, funding swaps)"
-    echo "  brap         BRAP adapter (cross-chain swaps and bridges)"
+    echo "  ccxt         CCXT adapter (centralized exchanges, multi-exchange factory)"
+    echo "  coding       Coding interface (custom Python scripts for complex DeFi ops)"
     echo "  hyperlend    HyperLend adapter (HyperEVM lending)"
     echo "  hyperliquid  Hyperliquid adapter (perps, spot, deposits/withdrawals)"
     echo "  polymarket   Polymarket adapter (prediction markets, trading, bridging)"
@@ -193,7 +199,7 @@ show_list() {
 }
 
 show_all() {
-    for topic in strategies setup boros brap hyperlend hyperliquid polymarket moonwell pendle uniswap projectx data; do
+    for topic in adapters strategies setup boros ccxt coding hyperlend hyperliquid polymarket moonwell pendle uniswap projectx data; do
         show_topic "$topic"
     done
 }
