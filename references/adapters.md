@@ -82,9 +82,9 @@ See [ccxt.md](ccxt.md) for setup + examples.
 - **Type**: `BOROS`
 - **Module**: `wayfinder_paths.adapters.boros_adapter.adapter.BorosAdapter`
 - **Protocol**: Boros (Arbitrum) - Fixed-rate funding markets
-- **Capabilities**: `market.read`, `market.quote`, `position.open`, `position.close`, `collateral.deposit`, `collateral.withdraw`
+- **Capabilities**: `market.read`, `market.quote`, `market.search`, `position.open`, `position.close`, `collateral.deposit`, `collateral.withdraw`, `collateral.transfer`, `bridge.hype_oft`
 
-Provides fixed-rate market discovery, quoting, orderbook data, deposits, withdrawals, and position management on Boros.
+Provides fixed-rate market discovery, quoting, orderbook data, deposits, withdrawals, position management, and HYPE OFT bridging on Boros.
 
 See [boros.md](boros.md) for details.
 
@@ -93,9 +93,9 @@ See [boros.md](boros.md) for details.
 - **Type**: `HYPERLEND`
 - **Module**: `wayfinder_paths.adapters.hyperlend_adapter.adapter.HyperlendAdapter`
 - **Protocol**: HyperLend (HyperEVM)
-- **Capabilities**: `market.stable_markets`, `market.assets_view`, `market.rate_history`, `lending.lend`, `lending.unlend`
+- **Capabilities**: `market.stable_markets`, `market.assets_view`, `market.rate_history`, `market.all_markets`, `lending.lend`, `lending.unlend`, `lending.borrow`, `lending.repay`, `collateral.set`, `collateral.remove`
 
-Provides stable market snapshots, rate history time series, and stablecoin supply/withdraw operations on HyperLend.
+Provides stable market snapshots, rate history, all-markets discovery, lending/borrowing, and collateral management on HyperLend.
 
 See [hyperlend.md](hyperlend.md) for details.
 
@@ -104,9 +104,9 @@ See [hyperlend.md](hyperlend.md) for details.
 - **Type**: `HYPERLIQUID`
 - **Module**: `wayfinder_paths.adapters.hyperliquid_adapter.adapter.HyperliquidAdapter`
 - **Protocol**: Hyperliquid DEX
-- **Capabilities**: `market.read`, `market.meta`, `market.funding`, `market.candles`, `market.orderbook`, `order.execute`, `order.cancel`, `position.manage`, `transfer`, `withdraw`
+- **Capabilities**: `market.read`, `market.meta`, `market.funding`, `market.candles`, `market.orderbook`, `order.execute`, `order.cancel`, `order.trigger`, `position.manage`, `position.isolated_margin`, `transfer`, `transfer.spot`, `transfer.hypercore_to_hyperevm`, `withdraw`
 
-Comprehensive Hyperliquid integration for perp/spot state, funding rates, mid prices, order books, candles, market/limit orders, leverage, deposits, and withdrawals.
+Comprehensive Hyperliquid integration for perp/spot state, funding rates, mid prices, order books, candles, market/limit/trigger orders, leverage, isolated margin, HyperCore→HyperEVM transfers, deposits, and withdrawals.
 
 See [hyperliquid.md](hyperliquid.md) for details.
 
@@ -115,9 +115,9 @@ See [hyperliquid.md](hyperliquid.md) for details.
 - **Type**: `POLYMARKET`
 - **Module**: `wayfinder_paths.adapters.polymarket_adapter.adapter.PolymarketAdapter`
 - **Protocol**: Polymarket (prediction markets)
-- **Capabilities**: `market.read`, `market.search`, `market.orderbook`, `market.candles`, `position.read`, `order.execute`, `order.cancel`, `bridge.deposit`, `bridge.withdraw`
+- **Capabilities**: `market.read`, `market.search`, `market.orderbook`, `market.candles`, `position.read`, `position.pnl`, `order.execute`, `order.cancel`, `bridge.deposit`, `bridge.withdraw`, `redeem`
 
-Read Polymarket markets/events, prices and order books, and (with a signing key) place trades and bridge collateral.
+Read Polymarket markets/events, prices and order books, and (with a signing key) place trades, bridge collateral, and redeem resolved positions.
 
 **Read-only examples:**
 
