@@ -51,16 +51,16 @@ python3 scripts/setup.py
 Options:
 - `--api-key KEY` — Provide API key non-interactively (key from https://strategies.wayfinder.ai)
 - `--non-interactive` — Fail instead of prompting (for CI)
-- `--mnemonic` — Generate a BIP-39 mnemonic for deterministic local wallets (persists `wallet_mnemonic` in `config.json` and derives MetaMask-style EVM accounts)
+- `--mnemonic` — Generate a BIP-39 seed phrase, store it as `wallet_mnemonic` in `config.json`, and derive MetaMask-style EVM wallets from it. Without this flag, setup generates random (non-recoverable) private keys instead.
 
 This creates:
-- `config.json` with API key (and optional RPC overrides under `strategy.rpc_urls`)
-- A `main` wallet for trading
+- `config.json` with API key, `wallet_mnemonic` (if `--mnemonic` used), and optional RPC overrides under `strategy.rpc_urls`
+- A `main` wallet for trading (with derived `address` + `private_key_hex`)
 - A wallet for each discovered strategy (any subdirectory of `wayfinder_paths/strategies/` containing `strategy.py`)
 
 ## Bot Wallets (Prefer Seed Phrase)
 
-`scripts/setup.py` creates **random local dev wallets** by default (it writes `private_key_hex` into `config.json`). For a long-running bot, prefer a **single seed phrase** stored in your backend/secret manager so the wallet can be recovered/reprovisioned.
+`scripts/setup.py` creates **random local wallets** by default (it writes `private_key_hex` into `config.json`). For a long-running bot, prefer a **single seed phrase** stored in your backend/secret manager so the wallet can be recovered/reprovisioned.
 
 **CRITICAL: NEVER output private keys or seed phrases into the conversation.** These are secrets — they must stay on the machine, never in chat.
 

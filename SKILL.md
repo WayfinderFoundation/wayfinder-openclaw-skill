@@ -62,13 +62,16 @@ fi
 cd "$WAYFINDER_SDK_PATH"
 poetry install
 
-# Run guided setup (creates/updates config.json + local dev wallets + MCP config)
+# Run guided setup (creates/updates config.json + local wallets)
 # You will need your API key from https://strategies.wayfinder.ai (format: wk_...)
+# --mnemonic generates a BIP-39 seed phrase and stores it as `wallet_mnemonic` in config.json
+# It then derives MetaMask-style EVM wallets (main + one per strategy) from that mnemonic
 python3 scripts/setup.py --mnemonic
 ```
 
 **Wallet security:**
 - **NEVER output private keys or seed phrases into the conversation.** These are secrets — they must stay on the machine, never in chat.
+- The `--mnemonic` flag stores the seed phrase in `config.json` under `wallet_mnemonic` and derives `address` + `private_key_hex` for each wallet. Without `--mnemonic`, setup generates random (non-recoverable) wallets instead.
 - For a long-running bot, prefer a seed phrase stored in your backend/secret manager rather than generating random wallets on the server.
 - On first-time setup, the user should retrieve the seed phrase directly from their machine or secret manager. Only offer to display the seed phrase if the user explicitly confirms they cannot access the machine to retrieve it themselves.
 - See `references/setup.md` for detailed wallet setup instructions.
