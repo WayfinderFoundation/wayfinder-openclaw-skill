@@ -108,22 +108,22 @@ All commands run from `$WAYFINDER_SDK_PATH`. Returns `{"ok": true, "result": {..
 - **`resource`** — Read-only MCP resource queries (adapters, strategies, wallets, balances, tokens, Hyperliquid data). Always start here for lookups.
   `poetry run wayfinder resource wayfinder://balances/main`
 
-- **`quote_swap`** — Get a swap/bridge quote (read-only, no on-chain effects). Always search token IDs first.
+- **`quote_swap`** — Get a swap/bridge quote via the BRAP aggregator (read-only, no on-chain effects). Supports same-chain swaps and cross-chain bridges across all supported networks. Always search token IDs first — never guess them. Returns the best route, expected output amount, gas estimate, and a ready-to-use `suggested_execute_request` you can pass straight into `execute`.
   `poetry run wayfinder quote_swap --wallet_label main --from_token usd-coin-base --to_token ethereum-base --amount 500`
 
-- **`execute`** — Execute swaps, sends, or Hyperliquid deposits. **Live — confirm with user first.**
+- **`execute`** — Execute on-chain transactions. Supports three kinds: `swap` (token swaps and cross-chain bridges via BRAP), `send` (transfer tokens to another address — use `token: "native"` + `chain_id` for native gas sends), and `hyperliquid_deposit` (bridge USDC to Hyperliquid L1 — minimum 5 USDC or funds are lost). A tx hash does NOT mean success — the SDK waits for the receipt and raises on revert. **Live — confirm with user first.** For full parameter details see [references/commands.md](references/commands.md).
   `poetry run wayfinder execute --kind swap --wallet_label main --from_token usd-coin-base --to_token ethereum-base --amount 500`
 
-- **`hyperliquid`** — Wait for Hyperliquid deposits/withdrawals to settle. Use `resource` for read-only queries.
+- **`hyperliquid`** — Wait for Hyperliquid deposits or withdrawals to settle before proceeding. Use `resource wayfinder://hyperliquid/...` for read-only queries (account state, positions, funding rates, order books, mid prices, candles). For full Hyperliquid capabilities see [references/hyperliquid.md](references/hyperliquid.md).
   `poetry run wayfinder hyperliquid --action wait_for_deposit --wallet_label main --expected_increase 100`
 
-- **`hyperliquid_execute`** — Place/cancel orders, update leverage, withdraw USDC. **Live — confirm with user first.**
+- **`hyperliquid_execute`** — Trade perps and spot on Hyperliquid. Actions: `place_order` (market/limit), `cancel_order`, `cancel_all_orders`, `update_leverage` (cross or isolated), `update_isolated_margin`, `place_trigger_order` (TP/SL — always reduce-only), `withdraw` (USDC back to Arbitrum), `spot_transfer`, `hypercore_to_hyperevm`. Supports `--usd_amount_kind margin` (collateral) vs `notional` (position size) — clarify with the user which they mean. **Live — confirm with user first.** For full parameter details see [references/hyperliquid.md](references/hyperliquid.md).
   `poetry run wayfinder hyperliquid_execute --action place_order --wallet_label main --coin ETH --is_buy true --usd_amount 200 --usd_amount_kind margin --leverage 5`
 
-- **`polymarket`** — Read-only Polymarket queries (search, status, order books, prices).
+- **`polymarket`** — Read-only Polymarket queries. Actions: `search` (find markets by keyword), `status` (wallet positions, balances, open orders, PnL breakdown), `order_book` (bids/asks for a market), `prices` (current YES/NO prices), `candles` (price history). For full capabilities see [references/polymarket.md](references/polymarket.md).
   `poetry run wayfinder polymarket --action search --query "bitcoin above 100k" --limit 5`
 
-- **`polymarket_execute`** — Polymarket bridging and trading. **Live — confirm with user first.**
+- **`polymarket_execute`** — Trade prediction markets on Polymarket. Actions: `bridge_deposit` / `bridge_withdraw` (move USDC between Polygon wallet and Polymarket), `buy` / `sell` (market orders on YES/NO outcomes), `place_limit_order`, `cancel_order`, `cancel_all`, `redeem` (claim winnings from resolved markets). Polymarket uses Polygon USDC — bridge funds in first. **Live — confirm with user first.** For full parameter details see [references/polymarket.md](references/polymarket.md).
   `poetry run wayfinder polymarket_execute --action buy --wallet_label main --market_slug "some-slug" --outcome YES --amount_usdc 2`
 
 - **`run_strategy`** — Strategy lifecycle: status, analyze, quote, deposit, update, withdraw, exit.
