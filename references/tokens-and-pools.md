@@ -103,12 +103,18 @@ poetry run wayfinder resource wayfinder://adapters/pool_adapter
 
 ## Supported Chains
 
-| Chain | Code | Chain ID |
-|-------|------|----------|
-| Base | `base` | 8453 |
-| Arbitrum | `arbitrum` | 42161 |
-| Ethereum | `ethereum` | 1 |
-| HyperEVM | `hyperevm` | 999 |
+| Chain | ID | Code | Symbol | Native token ID |
+|------|----|------|--------|-----------------|
+| Ethereum | 1 | `ethereum` | ETH | `ethereum-ethereum` |
+| Base | 8453 | `base` | ETH | `ethereum-base` |
+| Arbitrum | 42161 | `arbitrum` | ETH | `ethereum-arbitrum` |
+| Polygon | 137 | `polygon` | POL | `polygon-ecosystem-token-polygon` |
+| BSC | 56 | `bsc` | BNB | `binancecoin-bsc` |
+| Avalanche | 43114 | `avalanche` | AVAX | `avalanche-avalanche` |
+| Plasma | 9745 | `plasma` | PLASMA | `plasma-plasma` |
+| HyperEVM | 999 | `hyperevm` | HYPE | `hyperliquid-hyperevm` |
+
+Valid chain codes: `ethereum`, `base`, `arbitrum`, `polygon`, `bsc`, `avalanche`, `plasma`, `hyperevm`. Note: `mainnet` is NOT a valid chain code — use `ethereum` instead.
 
 ## Token Metadata Notes
 

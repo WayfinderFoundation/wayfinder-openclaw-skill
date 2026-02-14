@@ -20,7 +20,7 @@ fi
 cd "$WAYFINDER_SDK_PATH"
 
 # Create/update config.json + wallets
-python3 scripts/setup.py
+python3 scripts/setup.py --mnemonic
 
 # Verify
 export WAYFINDER_CONFIG_PATH="${WAYFINDER_CONFIG_PATH:-$WAYFINDER_SDK_PATH/config.json}"

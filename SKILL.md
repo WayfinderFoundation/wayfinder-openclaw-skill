@@ -1,0 +1,240 @@
+---
+name: wayfinder
+description: DeFi trading, yield strategies, and portfolio management via the Wayfinder Paths CLI (`poetry run wayfinder`). Use when the user wants to check balances, swap tokens, bridge assets, trade perps, trade prediction markets (Polymarket), run automated yield strategies (stablecoin yield, basis trading, Moonwell loops, HyperLend, Boros HYPE), manage wallets, discover DeFi pools, look up token metadata, manage LP positions (Uniswap V3 / ProjectX), or execute one-off DeFi scripts. Supports Ethereum, Base, Arbitrum, Polygon, BSC, Avalanche, Plasma, and HyperEVM via protocol adapters.
+metadata: {"openclaw":{"emoji":"🧭","homepage":"https://github.com/WayfinderFoundation/wayfinder-paths-sdk","requires":{"bins":["poetry"]},"install":[{"id":"brew","kind":"brew","formula":"poetry","bins":["poetry"],"label":"Install poetry"}]}}
+---
+
+# Wayfinder
+
+DeFi trading, yield strategies, and portfolio management powered by [poetry run wayfinder Paths](https://github.com/WayfinderFoundation/wayfinder-paths-sdk).
+
+## Pre-Flight Check
+
+Before running any commands, verify that poetry run wayfinder Paths is installed and reachable:
+
+```bash
+# SDK location (override by setting WAYFINDER_SDK_PATH)
+export WAYFINDER_SDK_PATH="${WAYFINDER_SDK_PATH:-$HOME/wayfinder-paths-sdk}"
+
+# Check if wayfinder-paths-sdk directory exists
+if [ ! -d "$WAYFINDER_SDK_PATH" ]; then
+  echo "ERROR: wayfinder-paths-sdk is not installed at: $WAYFINDER_SDK_PATH"
+  echo "Set WAYFINDER_SDK_PATH or run the First-Time Setup below."
+  exit 1
+fi
+
+# Config path (override by setting WAYFINDER_CONFIG_PATH)
+export WAYFINDER_CONFIG_PATH="${WAYFINDER_CONFIG_PATH:-$WAYFINDER_SDK_PATH/config.json}"
+
+# Check if the config exists
+if [ ! -f "$WAYFINDER_CONFIG_PATH" ]; then
+  echo "ERROR: config not found at $WAYFINDER_CONFIG_PATH. Run the First-Time Setup below."
+  exit 1
+fi
+
+# Check if the CLI is functional
+cd "$WAYFINDER_SDK_PATH"
+if ! poetry run wayfinder --help > /dev/null 2>&1; then
+  echo "ERROR: poetry run wayfinder CLI is not working. Run 'cd $WAYFINDER_SDK_PATH && poetry install' to fix."
+  exit 1
+fi
+
+echo "poetry run wayfinder Paths is installed and ready."
+```
+
+If either check fails, follow the **First-Time Setup** instructions below before proceeding.
+
+## Quick Start
+
+### First-Time Setup
+
+**Important:** The SDK must be installed from GitHub via `git clone`. Do NOT install from PyPI (`pip install wayfinder-paths` will not work).
+
+**Before starting:** You need a Wayfinder API key (format: `wk_...`). Get one at **https://strategies.wayfinder.ai**. The guided setup will prompt you for this key.
+
+```bash
+# Clone wayfinder-paths-sdk from GitHub (required — do NOT pip install)
+export WAYFINDER_SDK_PATH="${WAYFINDER_SDK_PATH:-$HOME/wayfinder-paths-sdk}"
+if [ ! -d "$WAYFINDER_SDK_PATH" ]; then
+  git clone https://github.com/WayfinderFoundation/wayfinder-paths-sdk.git "$WAYFINDER_SDK_PATH"
+fi
+
+cd "$WAYFINDER_SDK_PATH"
+poetry install
+
+# Run guided setup (creates/updates config.json + local dev wallets + MCP config)
+# You will need your API key from https://strategies.wayfinder.ai (format: wk_...)
+python3 scripts/setup.py --mnemonic
+```
+
+**Wallet security:**
+- **NEVER output private keys or seed phrases into the conversation.** These are secrets — they must stay on the machine, never in chat.
+- For a long-running bot, prefer a seed phrase stored in your backend/secret manager rather than generating random wallets on the server.
+- On first-time setup, the user should retrieve the seed phrase directly from their machine or secret manager. Only offer to display the seed phrase if the user explicitly confirms they cannot access the machine to retrieve it themselves.
+- See `references/setup.md` for detailed wallet setup instructions.
+
+### Verify Setup
+
+```bash
+export WAYFINDER_SDK_PATH="${WAYFINDER_SDK_PATH:-$HOME/wayfinder-paths-sdk}"
+export WAYFINDER_CONFIG_PATH="${WAYFINDER_CONFIG_PATH:-$WAYFINDER_SDK_PATH/config.json}"
+cd "$WAYFINDER_SDK_PATH"
+poetry run wayfinder resource wayfinder://strategies
+poetry run wayfinder resource wayfinder://wallets
+poetry run wayfinder resource wayfinder://balances/main
+```
+
+## Commands
+
+All commands run from `$WAYFINDER_SDK_PATH`. Returns `{"ok": true, "result": {...}}` on success. For full parameter tables see [references/commands.md](references/commands.md).
+
+- **`resource`** — Read-only MCP resource queries (adapters, strategies, wallets, balances, tokens, Hyperliquid data). Always start here for lookups.
+  `poetry run wayfinder resource wayfinder://balances/main`
+
+- **`quote_swap`** — Get a swap/bridge quote (read-only, no on-chain effects). Always search token IDs first.
+  `poetry run wayfinder quote_swap --wallet_label main --from_token usd-coin-base --to_token ethereum-base --amount 500`
+
+- **`execute`** — Execute swaps, sends, or Hyperliquid deposits. **Live — confirm with user first.**
+  `poetry run wayfinder execute --kind swap --wallet_label main --from_token usd-coin-base --to_token ethereum-base --amount 500`
+
+- **`hyperliquid`** — Wait for Hyperliquid deposits/withdrawals to settle. Use `resource` for read-only queries.
+  `poetry run wayfinder hyperliquid --action wait_for_deposit --wallet_label main --expected_increase 100`
+
+- **`hyperliquid_execute`** — Place/cancel orders, update leverage, withdraw USDC. **Live — confirm with user first.**
+  `poetry run wayfinder hyperliquid_execute --action place_order --wallet_label main --coin ETH --is_buy true --usd_amount 200 --usd_amount_kind margin --leverage 5`
+
+- **`polymarket`** — Read-only Polymarket queries (search, status, order books, prices).
+  `poetry run wayfinder polymarket --action search --query "bitcoin above 100k" --limit 5`
+
+- **`polymarket_execute`** — Polymarket bridging and trading. **Live — confirm with user first.**
+  `poetry run wayfinder polymarket_execute --action buy --wallet_label main --market_slug "some-slug" --outcome YES --amount_usdc 2`
+
+- **`run_strategy`** — Strategy lifecycle: status, analyze, quote, deposit, update, withdraw, exit.
+  `poetry run wayfinder run_strategy --strategy stablecoin_yield_strategy --action status`
+
+- **`wallets`** — Create wallets, annotate positions, discover cross-protocol portfolio.
+  `poetry run wayfinder wallets --action discover_portfolio --wallet_label main --parallel`
+
+- **`run_script`** — Execute sandboxed Python scripts from `.wayfinder_runs/`.
+  `poetry run wayfinder run_script --script_path .wayfinder_runs/my_flow.py --args '["--dry-run"]' --wallet_label main`
+
+## Safety
+
+- **NEVER output private keys or seed phrases into the conversation.** These are secrets that must stay on the machine. Only offer to display a seed phrase if the user explicitly confirms they cannot access the machine to retrieve it themselves.
+- **Execution commands are live.** Require explicit user confirmation before running `execute`, `hyperliquid_execute`, `polymarket_execute`, or any script that broadcasts transactions.
+- **NEVER guess or fabricate token IDs.** Before any token operation (swap, send, quote, balance check):
+  - For **native gas tokens** (ETH, HYPE): use `poetry run wayfinder resource wayfinder://tokens/gas/<chain_code>`
+  - For **ERC20 tokens**: use `poetry run wayfinder resource wayfinder://tokens/search/<chain_code>/<query>` (fuzzy search) and use the exact token ID from the result
+  - Do not construct IDs by combining symbols with chain names — the coingecko ID is unpredictable. Do not call `tokens/resolve` with a guessed ID — it hits a different API than search.
+- **Bridging to a new chain (first time):** bridge native gas to the destination chain first (use `tokens/gas/<chain_code>` or see [references/tokens-and-pools.md](references/tokens-and-pools.md)), then bridge/swap for the target asset.
+- Start with small test amounts.
+- Withdraw and exit are separate steps: `withdraw` liquidates positions, `exit` transfers funds home.
+- **Hyperliquid deposits must be >= 5 USDC** — amounts below 5 are lost on the bridge.
+- Market order slippage is capped at 25% (`--slippage 0.25`).
+- Scripts are sandboxed to the runs directory — no arbitrary file execution.
+- **Sizing for perp orders:** when a user says "$X at Yx leverage", clarify: `--usd_amount_kind margin` = $X is collateral (notional = X * leverage); `--usd_amount_kind notional` = $X is position size. `--usd_amount` and `--size` are mutually exclusive.
+
+## Common Workflows
+
+### Check Before Trading
+
+```bash
+poetry run wayfinder resource wayfinder://balances/main
+# ALWAYS look up tokens first — never guess IDs
+poetry run wayfinder resource wayfinder://tokens/search/base/usdc   # Search for USDC → get token ID from result
+poetry run wayfinder resource wayfinder://tokens/gas/base            # Get native ETH on Base
+# Use the exact token IDs from the lookup results
+poetry run wayfinder resource wayfinder://hyperliquid/prices/ETH
+poetry run wayfinder quote_swap --wallet_label main --from_token usd-coin-base --to_token ethereum-base --amount 1000
+```
+
+### Deploy a Strategy
+
+```bash
+poetry run wayfinder resource wayfinder://strategies
+poetry run wayfinder run_strategy --strategy stablecoin_yield_strategy --action status
+poetry run wayfinder run_strategy --strategy stablecoin_yield_strategy --action deposit --main_token_amount 100 --gas_token_amount 0.01
+poetry run wayfinder run_strategy --strategy stablecoin_yield_strategy --action update
+```
+
+### Open a Hyperliquid Position
+
+```bash
+poetry run wayfinder resource wayfinder://hyperliquid/main/state
+poetry run wayfinder hyperliquid_execute --action update_leverage --wallet_label main --coin ETH --leverage 5
+poetry run wayfinder hyperliquid_execute --action place_order --wallet_label main --coin ETH --is_buy true --usd_amount 200 --usd_amount_kind margin --leverage 5
+```
+
+### Wind Down Everything
+
+```bash
+poetry run wayfinder run_strategy --strategy stablecoin_yield_strategy --action withdraw
+poetry run wayfinder run_strategy --strategy stablecoin_yield_strategy --action exit
+```
+
+## Custom Scripts
+
+For multi-step flows, conditional logic, or protocol combinations, write a Python script using the SDK's coding interface. Scripts live in `$WAYFINDER_SDK_PATH/.wayfinder_runs/` (sandboxed).
+
+**Before writing any script**, pull the SDK reference docs for the adapter you need:
+
+```bash
+./scripts/pull-sdk-ref.sh moonwell           # Pull docs for a specific adapter
+./scripts/pull-sdk-ref.sh --list             # List available topics
+```
+
+**Available topics:** `strategies`, `setup`, `boros`, `hyperlend`, `hyperliquid`, `polymarket`, `moonwell`, `pendle`, `uniswap`, `projectx`, `data`
+
+**Quick start:**
+
+```python
+#!/usr/bin/env python3
+import asyncio
+from wayfinder_paths.mcp.scripting import get_adapter
+from wayfinder_paths.adapters.moonwell_adapter import MoonwellAdapter
+
+async def main():
+    adapter = get_adapter(MoonwellAdapter, "main")  # Auto-wires config + signing
+    success, result = await adapter.lend(mtoken="0x...", amount=100_000_000)
+    print(f"Result: {result}" if success else f"Error: {result}")
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+Always test with `--dry-run` before live execution. See [references/coding-interface.md](references/coding-interface.md) for the full adapter API, examples, and patterns.
+
+## Protocol References
+
+- [references/commands.md](references/commands.md) — Full command reference with parameter tables and config structure
+- [references/errors.md](references/errors.md) — Error taxonomy, details object, and troubleshooting
+- [references/setup.md](references/setup.md) — First-time setup, configuration, and wallet management
+- [references/strategies.md](references/strategies.md) — Strategy details, parameters, and workflows
+- [references/adapters.md](references/adapters.md) — Adapter capabilities and method signatures
+- [references/coding-interface.md](references/coding-interface.md) — Custom Python scripting with adapters
+- [references/tokens-and-pools.md](references/tokens-and-pools.md) — Token IDs, supported chains, pool discovery, balance reads
+- [references/hyperliquid.md](references/hyperliquid.md) — Hyperliquid trading, deposits, funding
+- [references/polymarket.md](references/polymarket.md) — Polymarket markets, bridging, and trading
+- [references/ccxt.md](references/ccxt.md) — Centralized exchanges (Aster/Binance/etc.) via CCXT (use carefully)
+- [references/moonwell.md](references/moonwell.md) — Moonwell lending, mToken addresses, gotchas
+- [references/pendle.md](references/pendle.md) — Pendle PT/YT markets, swap execution
+- [references/boros.md](references/boros.md) — Boros fixed-rate markets, rate locking
+- [references/uniswap.md](references/uniswap.md) — Uniswap V3 LP positions and fee collection
+- [references/projectx.md](references/projectx.md) — ProjectX (V3 fork) LP positions, swaps, and strategy notes
+- [references/hyperlend.md](references/hyperlend.md) — HyperLend lending, supply/withdraw flows
+
+## Best Practices
+
+### Security
+1. Never share private keys or commit config.json
+2. Start with small test amounts
+3. Use dedicated wallets per strategy for isolation
+4. Verify addresses before large transfers
+5. Use stop losses for leverage trading
+
+### Trading
+1. Always quote before executing swaps
+2. Specify chain for lesser-known tokens
+3. Consider gas costs (use Base for small amounts)
+4. Check balance before trades
+5. Use limit orders for better prices on Hyperliquid

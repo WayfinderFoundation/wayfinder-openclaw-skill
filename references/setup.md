@@ -3,8 +3,8 @@
 ## Prerequisites
 
 - Python 3.12+
-- Poetry
 - Git
+- Poetry (optional — the setup script will offer to install it automatically via `pipx` or the official installer if not found)
 
 ## Installation
 
@@ -51,11 +51,12 @@ python3 scripts/setup.py
 Options:
 - `--api-key KEY` — Provide API key non-interactively (key from https://strategies.wayfinder.ai)
 - `--non-interactive` — Fail instead of prompting (for CI)
+- `--mnemonic` — Generate a BIP-39 mnemonic for deterministic local wallets (persists `wallet_mnemonic` in `config.json` and derives MetaMask-style EVM accounts)
 
 This creates:
 - `config.json` with API key (and optional RPC overrides under `strategy.rpc_urls`)
 - A `main` wallet for trading
-- MCP server configuration
+- A wallet for each discovered strategy (any subdirectory of `wayfinder_paths/strategies/` containing `strategy.py`)
 
 ## Bot Wallets (Prefer Seed Phrase)
 

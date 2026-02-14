@@ -27,22 +27,22 @@ Before writing a script, **pull the detailed reference docs** for the relevant a
 
 ```bash
 # Pull docs for the adapter you're using (reads from pinned SDK version in sdk-version.md)
-./wayfinder/scripts/pull-sdk-ref.sh moonwell
-./wayfinder/scripts/pull-sdk-ref.sh boros hyperliquid
+./scripts/pull-sdk-ref.sh moonwell
+./scripts/pull-sdk-ref.sh boros hyperliquid
 
 # Available topics: strategies, setup, boros, brap, hyperlend, hyperliquid, polymarket, moonwell, pendle, uniswap, projectx, data
-./wayfinder/scripts/pull-sdk-ref.sh --list
+./scripts/pull-sdk-ref.sh --list
 
 # Check the pinned SDK version
-./wayfinder/scripts/pull-sdk-ref.sh --version
+./scripts/pull-sdk-ref.sh --version
 
 # Override the pinned version for a specific pull
-./wayfinder/scripts/pull-sdk-ref.sh --commit abc123 moonwell
+./scripts/pull-sdk-ref.sh --commit abc123 moonwell
 ```
 
 These docs cover method signatures, unit conventions, gotchas, execution patterns, and contract addresses. **Always pull them before writing a script.**
 
-The SDK ref is tracked in `wayfinder/sdk-version.md`. The pull script checks out that ref when reading docs, then restores the SDK to its previous state.
+The SDK ref is tracked in `sdk-version.md`. The pull script checks out that ref when reading docs, then restores the SDK to its previous state.
 
 You can also read the adapter source code directly:
 
