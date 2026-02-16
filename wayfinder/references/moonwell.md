@@ -6,7 +6,7 @@ Moonwell is a lending/borrowing protocol on Base. The Moonwell adapter provides 
 
 - **Type**: `MOONWELL`
 - **Module**: `wayfinder_paths.adapters.moonwell_adapter.adapter.MoonwellAdapter`
-- **Capabilities**: `lending.lend`, `lending.unlend`, `lending.borrow`, `lending.repay`, `collateral.set`, `collateral.remove`, `rewards.claim`, `position.read`, `market.apy`, `market.collateral_factor`
+- **Capabilities**: `lending.lend`, `lending.unlend`, `lending.borrow`, `lending.repay`, `collateral.set`, `collateral.remove`, `rewards.claim`, `position.read`, `market.list`, `market.apy`, `market.collateral_factor`
 
 ## Market Data
 
@@ -41,9 +41,6 @@ Moonwell operations are executed via one-off scripts under `.wayfinder_runs/`:
 ```bash
 # Run a Moonwell script (dry run)
 poetry run wayfinder run_script --script_path .wayfinder_runs/moonwell_lend.py --wallet_label main
-
-# Run live
-poetry run wayfinder run_script --script_path .wayfinder_runs/moonwell_lend.py --wallet_label main --force
 ```
 
 ### Script Example (supply USDC)

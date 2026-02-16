@@ -6,7 +6,7 @@ HyperLend is a lending protocol on HyperEVM (Aave V3 fork). It provides lending,
 
 - **Type**: `HYPERLEND`
 - **Module**: `wayfinder_paths.adapters.hyperlend_adapter.adapter.HyperlendAdapter`
-- **Capabilities**: `market.stable_markets`, `market.assets_view`, `market.rate_history`, `market.all_markets`, `lending.lend`, `lending.unlend`, `lending.borrow`, `lending.repay`, `collateral.set`, `collateral.remove`
+- **Capabilities**: `market.list`, `market.read`, `market.stable_markets`, `market.assets_view`, `market.rate_history`, `position.read`, `lending.lend`, `lending.unlend`, `lending.borrow`, `lending.repay`, `collateral.set`, `collateral.remove`
 
 ## Market Data
 
@@ -47,9 +47,6 @@ HyperLend operations are executed via one-off scripts:
 ```bash
 # Run a HyperLend script (dry run)
 poetry run wayfinder run_script --script_path .wayfinder_runs/hyperlend_supply.py --wallet_label main
-
-# Run live
-poetry run wayfinder run_script --script_path .wayfinder_runs/hyperlend_supply.py --wallet_label main --force
 ```
 
 ### Execution Methods

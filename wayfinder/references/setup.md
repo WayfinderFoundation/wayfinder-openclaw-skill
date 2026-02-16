@@ -1,4 +1,4 @@
-# Setup Guide
+# Setup Guide (SDK + config.json)
 
 ## Prerequisites
 

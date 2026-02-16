@@ -11,7 +11,7 @@ Polymarket is a prediction market platform. The Polymarket adapter supports:
 
 - **Type**: `POLYMARKET`
 - **Module**: `wayfinder_paths.adapters.polymarket_adapter.adapter.PolymarketAdapter`
-- **Capabilities**: `market.read`, `market.search`, `market.orderbook`, `market.candles`, `position.read`, `position.pnl`, `order.execute`, `order.cancel`, `bridge.deposit`, `bridge.withdraw`, `redeem`
+- **Capabilities**: `market.read`, `market.search`, `market.orderbook`, `market.candles`, `position.read`, `order.execute`, `order.cancel`, `bridge.deposit`, `bridge.withdraw`
 
 ## Read-Only Actions (CLI)
 

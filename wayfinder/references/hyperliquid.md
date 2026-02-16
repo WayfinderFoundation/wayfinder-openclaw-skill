@@ -6,7 +6,7 @@ Hyperliquid is a decentralized perpetuals exchange with spot trading. The Hyperl
 
 - **Type**: `HYPERLIQUID`
 - **Module**: `wayfinder_paths.adapters.hyperliquid_adapter.adapter.HyperliquidAdapter`
-- **Capabilities**: `market.read`, `market.meta`, `market.funding`, `market.candles`, `market.orderbook`, `order.execute`, `order.cancel`, `order.trigger`, `position.manage`, `position.isolated_margin`, `transfer`, `transfer.spot`, `transfer.hypercore_to_hyperevm`, `withdraw`
+- **Capabilities**: `market.read`, `market.meta`, `market.funding`, `market.candles`, `market.orderbook`, `order.execute`, `order.cancel`, `position.manage`, `transfer`, `withdraw`
 
 ## Market Data (via Resources)
 
