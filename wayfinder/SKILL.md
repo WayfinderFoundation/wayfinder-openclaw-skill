@@ -1,6 +1,6 @@
 ---
 name: wayfinder
-description: DeFi trading, yield strategies, and portfolio management via the Wayfinder Paths CLI (`poetry run wayfinder`). Use when the user wants to check balances, swap tokens, bridge assets, trade perps, trade prediction markets (Polymarket), run automated yield strategies (stablecoin yield, basis trading, Moonwell loops, HyperLend, Boros HYPE), manage wallets, discover DeFi pools, look up token metadata, manage LP positions (Uniswap V3 / ProjectX), or execute one-off DeFi scripts. Supports Ethereum, Base, Arbitrum, Polygon, BSC, Avalanche, Plasma, and HyperEVM via protocol adapters.
+description: DeFi trading, yield strategies, and portfolio management via the Wayfinder Paths CLI (`poetry run wayfinder`). Use when the user wants to check balances, swap tokens, bridge assets (BRAP), trade perps (Hyperliquid), trade prediction markets (Polymarket), lend/borrow (Moonwell, HyperLend, Aave V3, Morpho), run automated strategies, manage wallets, discover DeFi pools, manage LP positions (Uniswap V3 / ProjectX), or execute one-off DeFi scripts. Supports Ethereum, Base, Arbitrum, Polygon, BSC, Avalanche, Plasma, and HyperEVM via protocol adapters.
 metadata: {"openclaw":{"emoji":"🧭","homepage":"https://github.com/WayfinderFoundation/wayfinder-paths-sdk","requires":{"bins":["poetry"]},"install":[{"id":"brew","kind":"brew","formula":"poetry","bins":["poetry"],"label":"Install poetry"}]}}
 ---
 
@@ -21,6 +21,15 @@ Talk like a knowledgeable DeFi native, not like a tool manual. When a user asks 
 - **Show results cleanly** — when you run commands, translate raw JSON into readable summaries (see [references/adapters.md](references/adapters.md) § Presenting Adapter Data). Users want "$1,200 USDC on Base" not `{"balance_raw": 1200000000, "decimals": 6}`.
 
 The goal: a user should feel like they're talking to someone who deeply understands DeFi and happens to have a terminal open — not like they're reading API documentation.
+
+## Context Hygiene (Fetch, Don’t Guess)
+
+Keep this skill’s top-level context lean. Prefer fetching source-of-truth data on demand:
+
+- **Discovery first:** use `poetry run wayfinder resource wayfinder://adapters` and `wayfinder://adapters/{name}` for the canonical adapter list/capabilities (from adapter `manifest.yaml` + README excerpt).
+- **Token correctness:** always use `wayfinder://tokens/search/...` (or `wayfinder://tokens/gas/...`) before quoting/swapping/sending. Never invent token IDs or decimals.
+- **Deep dives:** when you need full adapter workflow docs, use `./scripts/pull-sdk-ref.sh <topic>` (reads the SDK’s `.claude/skills` at the pinned `sdk-version.md`) instead of expanding `SKILL.md`.
+- **Load only what you need:** open a single file under `references/` for the protocol in question (don’t bulk-load all references).
 
 ## Pre-Flight Check
 
@@ -234,7 +243,7 @@ For multi-step flows, conditional logic, or protocol combinations, write a Pytho
 ./scripts/pull-sdk-ref.sh --list             # List available topics
 ```
 
-**Available topics:** `strategies`, `setup`, `boros`, `hyperlend`, `hyperliquid`, `polymarket`, `moonwell`, `pendle`, `uniswap`, `projectx`, `data`
+**Available topics:** `strategies`, `setup`, `data`, `brap`, `aave`, `morpho`, `moonwell`, `hyperlend`, `pendle`, `boros`, `hyperliquid`, `polymarket`, `uniswap`, `projectx`, `simulation`, `promote`
 
 **Quick start:**
 
@@ -253,7 +262,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-Always test with `--dry-run` before live execution. See [references/coding-interface.md](references/coding-interface.md) for the full adapter API, examples, and patterns.
+Always test in simulation (Gorlami) or with a script-level `--dry-run` flag before live execution. See [references/simulation-dry-run.md](references/simulation-dry-run.md) and [references/coding-interface.md](references/coding-interface.md).
 
 ## Protocol References
 
@@ -264,10 +273,13 @@ Always test with `--dry-run` before live execution. See [references/coding-inter
 - [references/adapters.md](references/adapters.md) — Adapter capabilities and method signatures
 - [references/coding-interface.md](references/coding-interface.md) — Custom Python scripting with adapters
 - [references/tokens-and-pools.md](references/tokens-and-pools.md) — Token IDs, supported chains, pool discovery, balance reads
+- [references/simulation-dry-run.md](references/simulation-dry-run.md) — Safe fork-mode testing (Gorlami) before live execution
 - [references/hyperliquid.md](references/hyperliquid.md) — Hyperliquid trading, deposits, funding
 - [references/polymarket.md](references/polymarket.md) — Polymarket markets, bridging, and trading
 - [references/ccxt.md](references/ccxt.md) — Centralized exchanges (Aster/Binance/etc.) via CCXT (use carefully)
 - [references/moonwell.md](references/moonwell.md) — Moonwell lending, mToken addresses, gotchas
+- [references/aave-v3.md](references/aave-v3.md) — Aave V3 lending/borrowing (markets + positions + execution)
+- [references/morpho.md](references/morpho.md) — Morpho Blue + MetaMorpho (markets/vaults + rewards + execution)
 - [references/pendle.md](references/pendle.md) — Pendle PT/YT markets, swap execution
 - [references/boros.md](references/boros.md) — Boros fixed-rate markets, rate locking
 - [references/uniswap.md](references/uniswap.md) — Uniswap V3 LP positions and fee collection

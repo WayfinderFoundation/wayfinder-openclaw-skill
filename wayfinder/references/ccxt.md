@@ -30,6 +30,7 @@ Add a `ccxt` section with exchange IDs and credentials (exchange IDs must match 
 Notes:
 - Credentials are passed straight through to each CCXT exchange constructor; exchange-specific params (e.g. `password`, `uid`, `options`) are supported.
 - Exchange IDs must match CCXT’s exchange ids (e.g. `binance`, `bybit`, `aster`, `hyperliquid`).
+- Always `await adapter.close()` in a `finally` to avoid leaking HTTP sessions.
 
 ### Credentials quick reference
 

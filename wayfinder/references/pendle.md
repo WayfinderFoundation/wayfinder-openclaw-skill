@@ -6,7 +6,7 @@ Pendle splits yield-bearing assets into Principal Tokens (PTs) and Yield Tokens 
 
 - **Type**: `PENDLE`
 - **Module**: `wayfinder_paths.adapters.pendle_adapter.adapter.PendleAdapter`
-- **Capabilities**: `pendle.markets.read`, `pendle.market.snapshot`, `pendle.market.history`, `pendle.prices.ohlcv`, `pendle.prices.assets`, `pendle.swap.quote`, `pendle.swap.best_pt`, `pendle.swap.execute`, `pendle.convert.quote`, `pendle.convert.best_pt`, `pendle.convert.execute`, `pendle.positions.database`, `pendle.limit_orders.taker.read`, `pendle.limit_orders.maker.read`, `pendle.limit_orders.maker.write`, `pendle.deployments.read`, `pendle.router_static.rates`
+- **Capabilities**: `position.read`, `pendle.markets.read`, `pendle.market.snapshot`, `pendle.market.history`, `pendle.prices.ohlcv`, `pendle.prices.assets`, `pendle.swap.quote`, `pendle.swap.best_pt`, `pendle.swap.execute`, `pendle.convert.quote`, `pendle.convert.best_pt`, `pendle.convert.execute`, `pendle.positions.database`, `pendle.limit_orders.taker.read`, `pendle.limit_orders.maker.read`, `pendle.limit_orders.maker.write`, `pendle.deployments.read`, `pendle.router_static.rates`
 
 ## PT vs YT Mental Model
 
@@ -45,9 +45,6 @@ Pendle swaps are executed via one-off scripts using the Pendle Hosted SDK:
 ```bash
 # Run a Pendle script (dry run)
 poetry run wayfinder run_script --script_path .wayfinder_runs/pendle_buy_pt.py --wallet_label main
-
-# Run live
-poetry run wayfinder run_script --script_path .wayfinder_runs/pendle_buy_pt.py --wallet_label main --force
 ```
 
 ### Execution Methods

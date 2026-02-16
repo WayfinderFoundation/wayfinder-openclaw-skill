@@ -4,6 +4,8 @@
 
 All strategies support these actions via `poetry run wayfinder run_strategy`:
 
+For the canonical list of strategies and their entrypoints/adapters, use `poetry run wayfinder resource wayfinder://strategies`.
+
 ### Read-Only Actions (no confirmation needed)
 
 | Action | Description |

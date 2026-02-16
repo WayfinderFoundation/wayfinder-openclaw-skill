@@ -11,7 +11,7 @@ ProjectX is a Uniswap V3-style concentrated-liquidity DEX on HyperEVM. The Proje
 
 - **Type**: `PROJECTX`
 - **Module**: `wayfinder_paths.adapters.projectx_adapter.adapter.ProjectXLiquidityAdapter`
-- **Capabilities**: `projectx.pool.overview`, `projectx.positions.list`, `projectx.liquidity.mint`, `projectx.liquidity.increase`, `projectx.liquidity.decrease`, `projectx.fees.collect`, `projectx.position.burn`, `projectx.swap.exact_in`
+- **Capabilities**: `position.read`, `projectx.pool.overview`, `projectx.positions.list`, `projectx.liquidity.mint`, `projectx.liquidity.increase`, `projectx.liquidity.decrease`, `projectx.fees.collect`, `projectx.position.burn`, `projectx.swap.exact_in`
 
 ## Configuration
 
