@@ -28,8 +28,18 @@ Keep this skill’s top-level context lean. Prefer fetching source-of-truth data
 
 - **Discovery first:** use `poetry run wayfinder resource wayfinder://adapters` and `wayfinder://adapters/{name}` for the canonical adapter list/capabilities (from adapter `manifest.yaml` + README excerpt).
 - **Token correctness:** always use `wayfinder://tokens/search/...` (or `wayfinder://tokens/gas/...`) before quoting/swapping/sending. Never invent token IDs or decimals.
-- **Deep dives:** when you need full adapter workflow docs, use `./scripts/pull-sdk-ref.sh <topic>` (reads the SDK’s `.claude/skills` at the pinned `sdk-version.md`) instead of expanding `SKILL.md`.
+- **Adapter specifics:** when you’re about to use an adapter, open the relevant file under `references/` first, then confirm details in the SDK adapter’s `manifest.yaml` + `README.md` + `adapter.py` if needed.
+- **Deep dives:** if you still need the SDK’s internal workflow notes, use `./scripts/pull-sdk-ref.sh <topic>` (reads the SDK’s `.claude/skills` at the pinned `sdk-version.md`) instead of expanding `SKILL.md`.
 - **Load only what you need:** open a single file under `references/` for the protocol in question (don’t bulk-load all references).
+
+## Intent (Tools → Adapters → Scripts → Strategies)
+
+The job is to complete the user’s request using the Wayfinder tools. When the tool surface area is too coarse, drop down to adapters, write a small script, and keep anything reusable:
+
+1) **Tools first:** use `resource` + `quote_swap`/`execute`/`wallets`/etc. for the quickest correct result.
+2) **Adapters next:** if the request needs custom logic, read `references/<protocol>.md`, then confirm exact method names/params in the SDK adapter code.
+3) **Scripts when needed:** write a minimal Python script for multi-step flows (and save it as a reusable snippet in this repo if it’s broadly useful).
+4) **Strategies for automation:** promote repeated, policy-driven workflows into strategies (strategies should still call adapters; they don’t replace adapter understanding).
 
 ## Pre-Flight Check
 
@@ -148,7 +158,7 @@ All commands run from `$WAYFINDER_SDK_PATH`. Returns `{"ok": true, "result": {..
   `poetry run wayfinder wallets --action discover_portfolio --wallet_label main --parallel`
 
 - **`run_script`** — Execute sandboxed Python scripts from `.wayfinder_runs/`.
-  `poetry run wayfinder run_script --script_path .wayfinder_runs/my_flow.py --args '["--dry-run"]' --wallet_label main`
+  `poetry run wayfinder run_script --script_path .wayfinder_runs/my_flow.py --wallet_label main`
 
 ## Token Lookup
 
@@ -236,7 +246,11 @@ poetry run wayfinder run_strategy --strategy stablecoin_yield_strategy --action 
 
 For multi-step flows, conditional logic, or protocol combinations, write a Python script using the SDK's coding interface. Scripts live in `$WAYFINDER_SDK_PATH/.wayfinder_runs/` (sandboxed).
 
-**Before writing any script**, pull the SDK reference docs for the adapter you need:
+**Before writing any script**, ground yourself in the adapter you’re about to use:
+
+1) Open `references/<protocol>.md` in this repo (capabilities, method names, gotchas).
+2) Confirm against the SDK adapter’s `manifest.yaml` + `README.md` + `adapter.py` when anything is unclear.
+3) If you still need deeper workflow notes, pull the SDK’s `.claude/skills` docs:
 
 ```bash
 ./scripts/pull-sdk-ref.sh moonwell           # Pull docs for a specific adapter
@@ -262,8 +276,6 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-Always test in simulation (Gorlami) or with a script-level `--dry-run` flag before live execution. See [references/simulation-dry-run.md](references/simulation-dry-run.md) and [references/coding-interface.md](references/coding-interface.md).
-
 ## Protocol References
 
 - [references/commands.md](references/commands.md) — Full command reference with parameter tables and config structure
@@ -273,7 +285,7 @@ Always test in simulation (Gorlami) or with a script-level `--dry-run` flag befo
 - [references/adapters.md](references/adapters.md) — Adapter capabilities and method signatures
 - [references/coding-interface.md](references/coding-interface.md) — Custom Python scripting with adapters
 - [references/tokens-and-pools.md](references/tokens-and-pools.md) — Token IDs, supported chains, pool discovery, balance reads
-- [references/simulation-dry-run.md](references/simulation-dry-run.md) — Safe fork-mode testing (Gorlami) before live execution
+- [references/simulation-dry-run.md](references/simulation-dry-run.md) — Fork-mode simulation (Gorlami) and dry-run patterns
 - [references/hyperliquid.md](references/hyperliquid.md) — Hyperliquid trading, deposits, funding
 - [references/polymarket.md](references/polymarket.md) — Polymarket markets, bridging, and trading
 - [references/ccxt.md](references/ccxt.md) — Centralized exchanges (Aster/Binance/etc.) via CCXT (use carefully)
