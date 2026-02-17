@@ -1,6 +1,6 @@
 # Error Handling
 
-All errors return structured JSON: `{"ok": false, "error": {"code": "...", "message": "...", "details": ...}}`.
+All MCP tool errors return structured JSON: `{"ok": false, "error": {"code": "...", "message": "...", "details": ...}}`.
 
 ## Error Categories
 

@@ -7,6 +7,7 @@ Uniswap V3 is a concentrated-liquidity AMM. The Uniswap adapter provides LP posi
 - **Type**: `UNISWAP`
 - **Module**: `wayfinder_paths.adapters.uniswap_adapter.adapter.UniswapAdapter`
 - **Capabilities**: `uniswap.liquidity.add`, `uniswap.liquidity.increase`, `uniswap.liquidity.remove`, `uniswap.fees.collect`, `uniswap.position.get`, `uniswap.positions.list`, `uniswap.fees.uncollected`, `uniswap.pool.get`
+- **Supported chains**: Ethereum (1), Arbitrum (42161), Base (8453), Polygon (137), BSC (56), Avalanche (43114)
 
 ## Usage (via custom scripts)
 

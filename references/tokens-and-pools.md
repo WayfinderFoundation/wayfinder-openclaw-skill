@@ -1,4 +1,4 @@
-# Tokens and Pools
+# Tokens, Pools, and Balances
 
 > **RULE: Always search, never guess.** Before using any token in a command: for **native gas tokens** (ETH, HYPE) use `wayfinder://tokens/gas/<chain_code>`; for **ERC20 tokens** use `wayfinder://tokens/search/<chain_code>/<symbol>` and take the exact token ID from the result. Never fabricate token IDs — coingecko IDs are unpredictable. Never call `tokens/resolve` with a guessed ID.
 

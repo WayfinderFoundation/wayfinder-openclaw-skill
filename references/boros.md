@@ -6,7 +6,7 @@ Boros provides fixed-rate markets on Arbitrum. It allows locking in a fixed fund
 
 - **Type**: `BOROS`
 - **Module**: `wayfinder_paths.adapters.boros_adapter.adapter.BorosAdapter`
-- **Capabilities**: `market.read`, `market.quote`, `market.search`, `position.open`, `position.close`, `collateral.deposit`, `collateral.withdraw`, `collateral.transfer`, `bridge.hype_oft`
+- **Capabilities**: `market.read`, `market.quote`, `position.open`, `position.close`, `collateral.deposit`, `collateral.withdraw`
 
 ## Market Data
 
@@ -25,9 +25,6 @@ Boros operations are executed via one-off scripts:
 ```bash
 # Run a Boros script (dry run)
 poetry run wayfinder run_script --script_path .wayfinder_runs/boros_lock_rate.py --wallet_label main
-
-# Run live
-poetry run wayfinder run_script --script_path .wayfinder_runs/boros_lock_rate.py --wallet_label main --force
 ```
 
 ### Script Example
@@ -37,7 +34,7 @@ from wayfinder_paths.mcp.scripting import get_adapter
 from wayfinder_paths.adapters.boros_adapter import BorosAdapter
 
 adapter = get_adapter(BorosAdapter, "main")
-markets = await adapter.discover_markets()
+success, markets = await adapter.list_markets_all()
 ```
 
 ## Key Concepts

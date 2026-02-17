@@ -82,7 +82,7 @@ See [ccxt.md](ccxt.md) for setup + examples.
 - **Type**: `BOROS`
 - **Module**: `wayfinder_paths.adapters.boros_adapter.adapter.BorosAdapter`
 - **Protocol**: Boros (Arbitrum) - Fixed-rate funding markets
-- **Capabilities**: `market.read`, `market.quote`, `market.search`, `position.open`, `position.close`, `collateral.deposit`, `collateral.withdraw`, `collateral.transfer`, `bridge.hype_oft`
+- **Capabilities**: `market.read`, `market.quote`, `position.open`, `position.close`, `collateral.deposit`, `collateral.withdraw`
 
 Provides fixed-rate market discovery, quoting, orderbook data, deposits, withdrawals, position management, and HYPE OFT bridging on Boros.
 
@@ -93,18 +93,40 @@ See [boros.md](boros.md) for details.
 - **Type**: `HYPERLEND`
 - **Module**: `wayfinder_paths.adapters.hyperlend_adapter.adapter.HyperlendAdapter`
 - **Protocol**: HyperLend (HyperEVM)
-- **Capabilities**: `market.stable_markets`, `market.assets_view`, `market.rate_history`, `market.all_markets`, `lending.lend`, `lending.unlend`, `lending.borrow`, `lending.repay`, `collateral.set`, `collateral.remove`
+- **Capabilities**: `market.list`, `market.read`, `market.stable_markets`, `market.assets_view`, `market.rate_history`, `position.read`, `lending.lend`, `lending.unlend`, `lending.borrow`, `lending.repay`, `collateral.set`, `collateral.remove`
 
 Provides stable market snapshots, rate history, all-markets discovery, lending/borrowing, and collateral management on HyperLend.
 
 See [hyperlend.md](hyperlend.md) for details.
+
+### Aave V3 Adapter (`aave_v3_adapter`)
+
+- **Type**: `AAVE_V3`
+- **Module**: `wayfinder_paths.adapters.aave_v3_adapter.adapter.AaveV3Adapter`
+- **Protocol**: Aave V3 (multi-chain)
+- **Capabilities**: `market.list`, `position.read`, `lending.lend`, `lending.unlend`, `lending.borrow`, `lending.repay`, `collateral.toggle`, `rewards.claim`
+
+Read Aave V3 markets and user positions across supported chains, and execute supply/withdraw/borrow/repay/collateral/rewards flows.
+
+See [aave-v3.md](aave-v3.md) for details.
+
+### Morpho Adapter (`morpho_adapter`)
+
+- **Type**: `MORPHO`
+- **Module**: `wayfinder_paths.adapters.morpho_adapter.adapter.MorphoAdapter`
+- **Protocol**: Morpho Blue + MetaMorpho (multi-chain, ERC-4626)
+- **Capabilities**: `market.list`, `market.read`, `market.state`, `market.history`, `position.read`, `lending.lend`, `lending.unlend`, `lending.borrow`, `lending.repay`, `collateral.deposit`, `collateral.withdraw`, `vault.list`, `vault.read`, `vault.deposit`, `vault.withdraw`, `vault.mint`, `vault.redeem`, `rewards.read`, `rewards.claim`, `operator.authorize`, `allocator.reallocate`
+
+Market discovery + position reads for Morpho Blue, MetaMorpho vault discovery, rewards (Merkl + URD), and execution flows.
+
+See [morpho.md](morpho.md) for details.
 
 ### Hyperliquid Adapter (`hyperliquid_adapter`)
 
 - **Type**: `HYPERLIQUID`
 - **Module**: `wayfinder_paths.adapters.hyperliquid_adapter.adapter.HyperliquidAdapter`
 - **Protocol**: Hyperliquid DEX
-- **Capabilities**: `market.read`, `market.meta`, `market.funding`, `market.candles`, `market.orderbook`, `order.execute`, `order.cancel`, `order.trigger`, `position.manage`, `position.isolated_margin`, `transfer`, `transfer.spot`, `transfer.hypercore_to_hyperevm`, `withdraw`
+- **Capabilities**: `market.read`, `market.meta`, `market.funding`, `market.candles`, `market.orderbook`, `order.execute`, `order.cancel`, `position.manage`, `transfer`, `withdraw`
 
 Comprehensive Hyperliquid integration for perp/spot state, funding rates, mid prices, order books, candles, market/limit/trigger orders, leverage, isolated margin, HyperCore→HyperEVM transfers, deposits, and withdrawals.
 
@@ -115,7 +137,7 @@ See [hyperliquid.md](hyperliquid.md) for details.
 - **Type**: `POLYMARKET`
 - **Module**: `wayfinder_paths.adapters.polymarket_adapter.adapter.PolymarketAdapter`
 - **Protocol**: Polymarket (prediction markets)
-- **Capabilities**: `market.read`, `market.search`, `market.orderbook`, `market.candles`, `position.read`, `position.pnl`, `order.execute`, `order.cancel`, `bridge.deposit`, `bridge.withdraw`, `redeem`
+- **Capabilities**: `market.read`, `market.search`, `market.orderbook`, `market.candles`, `position.read`, `order.execute`, `order.cancel`, `bridge.deposit`, `bridge.withdraw`
 
 Read Polymarket markets/events, prices and order books, and (with a signing key) place trades, bridge collateral, and redeem resolved positions.
 
@@ -149,7 +171,7 @@ Provides transaction history tracking, net deposit calculations, deposit/withdra
 - **Type**: `MOONWELL`
 - **Module**: `wayfinder_paths.adapters.moonwell_adapter.adapter.MoonwellAdapter`
 - **Protocol**: Moonwell (Base)
-- **Capabilities**: `lending.lend`, `lending.unlend`, `lending.borrow`, `lending.repay`, `collateral.set`, `collateral.remove`, `rewards.claim`, `position.read`, `market.apy`, `market.collateral_factor`
+- **Capabilities**: `lending.lend`, `lending.unlend`, `lending.borrow`, `lending.repay`, `collateral.set`, `collateral.remove`, `rewards.claim`, `position.read`, `market.list`, `market.apy`, `market.collateral_factor`
 
 Full Moonwell integration including lending (supply/withdraw), borrowing (borrow/repay), collateral management, WELL rewards claiming, and position/market queries.
 
@@ -177,7 +199,7 @@ Batches multiple on-chain read calls into a single RPC request for efficiency.
 - **Type**: `PENDLE`
 - **Module**: `wayfinder_paths.adapters.pendle_adapter.adapter.PendleAdapter`
 - **Protocol**: Pendle
-- **Capabilities**: `pendle.markets.read`, `pendle.market.snapshot`, `pendle.market.history`, `pendle.prices.ohlcv`, `pendle.prices.assets`, `pendle.swap.quote`, `pendle.swap.best_pt`, `pendle.swap.execute`, `pendle.convert.quote`, `pendle.convert.best_pt`, `pendle.convert.execute`, `pendle.positions.database`, `pendle.limit_orders.taker.read`, `pendle.limit_orders.maker.read`, `pendle.limit_orders.maker.write`, `pendle.deployments.read`, `pendle.router_static.rates`
+- **Capabilities**: `position.read`, `pendle.markets.read`, `pendle.market.snapshot`, `pendle.market.history`, `pendle.prices.ohlcv`, `pendle.prices.assets`, `pendle.swap.quote`, `pendle.swap.best_pt`, `pendle.swap.execute`, `pendle.convert.quote`, `pendle.convert.best_pt`, `pendle.convert.execute`, `pendle.positions.database`, `pendle.limit_orders.taker.read`, `pendle.limit_orders.maker.read`, `pendle.limit_orders.maker.write`, `pendle.deployments.read`, `pendle.router_static.rates`
 
 Comprehensive Pendle integration for PT/YT market discovery, historical metrics, execution planning, swap quotes, and limit orders via the Pendle Hosted SDK.
 
@@ -199,7 +221,7 @@ See [uniswap.md](uniswap.md) for details.
 - **Type**: `PROJECTX`
 - **Module**: `wayfinder_paths.adapters.projectx_adapter.adapter.ProjectXLiquidityAdapter`
 - **Protocol**: ProjectX (Uniswap V3 fork on HyperEVM)
-- **Capabilities**: `projectx.pool.overview`, `projectx.positions.list`, `projectx.liquidity.mint`, `projectx.liquidity.increase`, `projectx.liquidity.decrease`, `projectx.fees.collect`, `projectx.position.burn`, `projectx.swap.exact_in`
+- **Capabilities**: `position.read`, `projectx.pool.overview`, `projectx.positions.list`, `projectx.liquidity.mint`, `projectx.liquidity.increase`, `projectx.liquidity.decrease`, `projectx.fees.collect`, `projectx.position.burn`, `projectx.swap.exact_in`
 
 Provides concentrated liquidity reads and execution on ProjectX, plus exact-in swaps.
 

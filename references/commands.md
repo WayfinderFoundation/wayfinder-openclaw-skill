@@ -97,13 +97,13 @@ Create, annotate, and discover cross-protocol positions. Use `resource wayfinder
 | `annotate_action` | string | **annotate** | — | Action being annotated |
 | `tool` | string | **annotate** | — | Tool name for annotation |
 | `status` | string | **annotate** | — | Status for annotation |
-| `chain_id` | string | No | — | — |
+| `chain_id` | int | No | — | Optional per-chain query override (only used by some protocols) |
 | `details` | string (JSON) | No | — | Extra metadata for annotation |
 | `protocols` | string (JSON) | No | — | Filter `discover_portfolio` to specific protocols |
 | `parallel` | bool | No | `false` | **Required if querying >= 3 protocols** without a `protocols` filter |
 | `include_zero_positions` | bool | No | `false` | Include empty positions in portfolio |
 
-Supported protocols for `discover_portfolio`: `hyperliquid`, `hyperlend`, `moonwell`, `boros`, `pendle`.
+Supported protocols for `discover_portfolio`: `hyperliquid`, `hyperlend`, `moonwell`, `morpho`, `boros`, `pendle`, `polymarket`, `aave`.
 
 ```bash
 poetry run wayfinder wallets --action create --label my_new_strategy
@@ -164,8 +164,7 @@ Execute swaps, token sends, or Hyperliquid deposits. **This broadcasts transacti
 | `deadline_seconds` | int | No | `300` | Swap only |
 | `recipient` | string | **send** | — | Recipient address |
 | `token` | string | **send** | — | Token ID (or `"native"` with `chain_id`). **Always search first.** |
-| `chain_id` | string | No | — | Required for `send` when `token="native"` |
-| `force` | flag | No | `false` | Do not rely on this as a "dry-run vs live" gate. Treat `execute` as live and require explicit user confirmation before calling it. |
+| `chain_id` | int | No | — | Required for `send` when `token="native"` |
 
 **Hyperliquid deposit validations (critical):**
 - Amount **must be >= 5 USDC** (deposits below 5 are lost on the bridge).
@@ -246,24 +245,23 @@ Place/cancel orders, update leverage, and withdraw USDC. **These operations are 
 | `action` | `place_order` \| `cancel_order` \| `update_leverage` \| `withdraw` \| `spot_to_perp_transfer` \| `perp_to_spot_transfer` | **Yes** | — | — |
 | `wallet_label` | string | **Yes** | — | Must resolve to wallet with private key |
 | `coin` | string | **place_order, cancel_order, update_leverage** | — | Or use `asset_id`. Strips `-perp`/`_perp` suffixes automatically |
-| `asset_id` | string | No | — | Direct asset ID (alternative to `coin`) |
-| `is_spot` | string | No | — | `true` for spot orders, `false` for perp. **Must be explicit for place_order.** |
+| `asset_id` | int | No | — | Direct asset ID (alternative to `coin`) |
+| `is_spot` | bool | No | — | `true` for spot orders, `false` for perp. **Must be explicit for place_order.** |
 | `order_type` | `market` \| `limit` | No | `market` | — |
-| `is_buy` | string | **place_order** | — | `true` or `false` |
-| `size` | string | No | — | **Mutually exclusive with `usd_amount`**; coin units |
-| `usd_amount` | string | No | — | **Mutually exclusive with `size`**; USD amount |
+| `is_buy` | bool | **place_order** | — | `true` or `false` |
+| `size` | float | No | — | **Mutually exclusive with `usd_amount`**; coin units |
+| `usd_amount` | float | No | — | **Mutually exclusive with `size`**; USD amount |
 | `usd_amount_kind` | string | **when `usd_amount` is used** | — | `notional` or `margin` |
-| `leverage` | string | **when `usd_amount_kind=margin`; update_leverage** | — | Must be positive |
-| `price` | string | **limit orders** | — | Must be positive |
+| `leverage` | int | **when `usd_amount_kind=margin`; update_leverage** | — | Must be positive |
+| `price` | float | **limit orders** | — | Must be positive |
 | `slippage` | float | No | `0.01` | Market orders only; 0–0.25 (25% cap) |
 | `reduce_only` | flag | No | `false` | `--reduce_only` / `--no-reduce_only` |
 | `cloid` | string | No | — | Client order ID |
-| `order_id` | string | **cancel_order** | — | Or use `cancel_cloid` |
+| `order_id` | int | **cancel_order** | — | Or use `cancel_cloid` |
 | `cancel_cloid` | string | No | — | Alternative to `order_id` for cancel |
 | `is_cross` | flag | No | `true` | `--is_cross` / `--no-is_cross` |
-| `amount_usdc` | string | **withdraw, transfers** | — | USDC amount for withdraw or transfers |
-| `builder_fee_tenths_bp` | string | No | — | Falls back to config default |
-| `force` | flag | No | `false` | Do not rely on this as a "dry-run vs live" gate. Treat `hyperliquid_execute` as live and require explicit user confirmation before calling it. |
+| `amount_usdc` | float | **withdraw, transfers** | — | USDC amount for withdraw or transfers |
+| `builder_fee_tenths_bp` | int | No | — | Falls back to config default |
 
 **Key validations for `place_order`:**
 - Exactly one of `size` or `usd_amount` (not both, not neither).
@@ -451,7 +449,6 @@ Run a local Python script in a subprocess. Scripts must live inside the runs dir
 | `timeout_s` | int | No | `600` | Clamped to min 1 second |
 | `env` | string | No | — | Additional env vars for subprocess (JSON object) |
 | `wallet_label` | string | No | — | For profile annotation |
-| `force` | flag | No | `false` | Do not rely on this as a "dry-run vs live" gate. Prefer implementing `--dry-run` / `--force` inside your script and passing it via `--args`. |
 
 **Validations:**
 - Script path must resolve to inside the runs directory (sandboxed — no arbitrary file execution).
