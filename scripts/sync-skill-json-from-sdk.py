@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Sync `wayfinder/skill.json` commands + resources from wayfinder-paths-sdk.
+"""Sync wayfinder/skill.json commands + resources from wayfinder-paths-sdk.
 
 This repo is the source of truth for the OpenClaw/ClawHub skill packaging, but
 the CLI surface area is defined by the Wayfinder Paths SDK MCP server.
@@ -74,15 +74,6 @@ def _git_current_ref(sdk_root: Path) -> str:
 def _git_checkout(sdk_root: Path, ref: str) -> None:
     subprocess.check_call(["git", "-C", str(sdk_root), "checkout", "--quiet", ref])
 
-def _git_show_file(sdk_root: Path, ref: str, relpath: str) -> str | None:
-    try:
-        return subprocess.check_output(
-            ["git", "-C", str(sdk_root), "show", f"{ref}:{relpath}"],
-            text=True,
-        )
-    except subprocess.CalledProcessError:
-        return None
-
 
 def _parse_server_py(server_py: str) -> tuple[list[str], list[str]]:
     # Tools are registered like: mcp.tool()(quote_swap)
@@ -118,20 +109,13 @@ def main() -> int:
         if do_checkout:
             _git_checkout(sdk_root, sdk_ref)
 
-        server_rel = "wayfinder_paths/mcp/server.py"
-        server_path = sdk_root / server_rel
+        server_path = sdk_root / "wayfinder_paths" / "mcp" / "server.py"
+        if not server_path.exists():
+            raise FileNotFoundError(f"Missing SDK MCP server: {server_path}")
 
-        server_py = None
-        if not do_checkout and sdk_ref:
-            # Prefer reading the pinned ref without mutating the working tree.
-            server_py = _git_show_file(sdk_root, sdk_ref, server_rel)
-
-        if server_py is None:
-            if not server_path.exists():
-                raise FileNotFoundError(f"Missing SDK MCP server: {server_path}")
-            server_py = server_path.read_text(encoding="utf-8")
-
-        tool_names, resource_uris = _parse_server_py(server_py)
+        tool_names, resource_uris = _parse_server_py(
+            server_path.read_text(encoding="utf-8")
+        )
 
         # Exclude intentionally-undocumented tool(s)
         tool_names = [t for t in tool_names if t != "runner"]
@@ -178,7 +162,7 @@ def main() -> int:
         print("SDK root:", sdk_root)
         print("SDK ref:", sdk_ref)
         if not do_checkout:
-            print("note: SDK working tree was not checked out (pinned ref is read via git when available).")
+            print("note: SDK ref was not checked out (run with --checkout to sync from a specific ref).")
         print("commands:", ", ".join(commands))
         return 0
     finally:

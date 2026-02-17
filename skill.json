@@ -2,7 +2,7 @@
   "name": "wayfinder",
   "version": "0.5.0",
   "description": "DeFi trading, yield strategies, and portfolio management via the Wayfinder Paths CLI (`poetry run wayfinder`).",
-  "sdk_version": "96dd213c23d39071e89043a719af067f17cc05ad",
+  "sdk_version": "v0.6.2",
   "entry": "SKILL.md",
   "commands": [
     "resource",
