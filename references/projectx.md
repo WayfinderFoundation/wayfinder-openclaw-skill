@@ -15,7 +15,8 @@ ProjectX is a Uniswap V3-style concentrated-liquidity DEX on HyperEVM. The Proje
 
 ## Configuration
 
-- **RPC resolution (chain id 999 / HyperEVM)**: Do not hardcode RPC URLs in scripts. Use `web3_from_chain_id(999)` (internally used by the adapter). If `strategy.rpc_urls["999"]` is not set, the SDK falls back to Wayfinder’s RPC proxy at `system.api_base_url` (auth via `system.api_key` / `WAYFINDER_API_KEY`).
+- **`strategy_wallet.address` is required**: The adapter raises `ValueError("strategy_wallet.address is required for ProjectX adapter")` during `__init__` if the wallet has no `address` field. This applies **even for read-only operations** like `get_full_user_state()`. When using `get_adapter(ProjectXLiquidityAdapter, "main")`, the `"main"` wallet in `config.json` must have an `address` field.
+- **RPC resolution (chain id 999 / HyperEVM)**: Do not hardcode RPC URLs in scripts. Use `web3_from_chain_id(999)` (internally used by the adapter). If `strategy.rpc_urls["999"]` is not set, the SDK falls back to Wayfinder's RPC proxy at `system.api_base_url` (auth via `system.api_key` / `WAYFINDER_API_KEY`).
 - **`pool_address` is optional**, but many pool-specific methods require it.
 - The adapter accepts `pool_address` via config in multiple keys (including nested `strategy` config): `pool_address`, `pool`, `projectx_pool_address`, `projectx_pool`.
 
@@ -109,6 +110,7 @@ The `projectx_thbill_usdc_strategy` strategy uses this adapter for concentrated-
 
 ## Gotchas
 
+- **`strategy_wallet.address` is mandatory at init**: Unlike some adapters that only need a wallet for writes, `ProjectXLiquidityAdapter.__init__` always requires `strategy_wallet.address`. A missing address raises `ValueError` before any method can be called — even for read-only operations.
 - **`pool_address` is optional (two modes):** Pool-scoped methods raise `ValueError("pool_address is required …")` when called without a configured pool.
 - **ProjectX pools can have non-standard tick spacing:** Prefer `mint_from_balances()` / `increase_liquidity_balanced()` (they use the pool’s `tick_spacing`). If you call low-level Uniswap-style methods directly, pass `tick_spacing=...` explicitly.
 - **`fetch_swaps()` is subgraph-based:** Swap history reads can fail due to subgraph downtime or missing config. Always check `(ok, swaps)` and fall back to on-chain reads when needed.

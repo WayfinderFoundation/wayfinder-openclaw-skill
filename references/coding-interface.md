@@ -276,22 +276,25 @@ from wayfinder_paths.adapters.pendle_adapter import PendleAdapter
 
 adapter = get_adapter(PendleAdapter, "main")
 
-# Discover markets
-success, markets = await adapter.get_markets(chain_id=8453)
+# Discover active markets — returns list directly (no tuple)
+markets = await adapter.list_active_pt_yt_markets(chain="base")
+market = markets[0]  # list of dicts with marketAddress, ptAddress, fixedApy, etc.
 
-# Get market time series
-success, series = await adapter.get_market_time_series(
+# Get market history — returns dict directly (no tuple)
+history = await adapter.fetch_market_history(
+    chain_id=8453,
     market_address="0x...",
-    chain_id=8453
+    time_frame="day",  # "hour", "day", or "week"
 )
 
-# Execute swap via Pendle Hosted SDK
-success, result = await adapter.swap(
+# Execute swap — mutations DO return (bool, result) tuples
+success, result = await adapter.execute_swap(
+    chain="base",
     market_address="0x...",
-    token_in="0x...",
-    token_out="0x...",
-    amount_in=100_000_000,
-    chain_id=8453
+    token_in="0x...",   # e.g. USDC address
+    token_out="0x...",  # e.g. PT address
+    amount_in="100000000",  # raw base units as string
+    slippage=0.01,
 )
 ```
 
@@ -303,21 +306,25 @@ from wayfinder_paths.adapters.boros_adapter import BorosAdapter
 adapter = get_adapter(BorosAdapter, "main")
 
 # Discover markets
-success, markets = await adapter.get_markets()
+success, markets = await adapter.list_markets_all()
 
-# Quote a rate lock
-success, quote = await adapter.quote(
-    market_id="...",
-    size=1000.0,
-    direction="long"  # or "short"
-)
+# Fast tenor-level APR scan (returns BorosTenorQuote dataclass instances)
+success, quotes = await adapter.list_tenor_quotes(underlying_symbol="HYPE", platform="hyperliquid")
+if success:
+    for q in quotes:
+        print(q.tenor_days, q.mid_apr)  # attribute access, NOT q["mid_apr"]
 
-# Open position
-success, result = await adapter.open_position(
-    market_id="...",
-    size=1000.0,
-    direction="long",
-    max_rate=0.10  # Max acceptable rate
+# Detailed quote for a single market (returns BorosMarketQuote dataclass)
+success, quote = await adapter.quote_market(market_dict)
+if success:
+    print(quote.mid_apr, quote.best_bid_apr, quote.best_ask_apr)
+
+# Place a rate order
+success, result = await adapter.place_rate_order(
+    market_id=123,
+    token_id=3,          # USDT collateral
+    size_yu_wei=50 * 10**18,
+    side="long",
 )
 ```
 
@@ -484,7 +491,7 @@ poetry run python .wayfinder_runs/my_script.py
 
 ## Return Pattern Convention
 
-All adapter mutation methods return `(success: bool, result_or_error: Any)`:
+Most adapter methods return `(success: bool, result_or_error: Any)`:
 
 ```python
 success, result = await adapter.some_method(...)
@@ -492,8 +499,33 @@ if success:
     # result contains the data (tx hash, response object, etc.)
     print(f"Success: {result}")
 else:
-    # result contains error message
+    # result contains error message (string), NOT the expected data type
     print(f"Error: {result}")
+```
+
+**Important caveats:**
+
+1. **Type changes on failure**: When `success=False`, `result` is an error **string**, not the typed data you'd get on success. Always check `success` before accessing fields on `result` — e.g., calling `result.mid_apr` on an error string raises `AttributeError`.
+
+2. **Nested results**: Some methods return compound data as the second element that requires further unpacking. For example, Hyperliquid's `get_meta_and_asset_ctxs()` returns `(True, [meta_dict, ctxs_list])` — unpack with `meta, ctxs = result`.
+
+3. **Pendle reads return data directly (no tuple)**: Pendle read methods like `list_active_pt_yt_markets()` and `fetch_market_history()` return the data directly, not `(bool, result)` tuples. Only Pendle mutation methods (`execute_swap`, `execute_convert`, `get_full_user_state`) return tuples.
+
+4. **Boros quotes return dataclass instances**: `list_tenor_quotes()` returns `list[BorosTenorQuote]` and `quote_market()` returns `BorosMarketQuote` — access fields via attributes (`q.mid_apr`), not dict keys (`q["mid_apr"]`).
+
+**Defensive pattern:**
+
+```python
+success, result = await adapter.some_method(...)
+if not success:
+    print(f"Error: {result}")  # result is a string here
+    return
+
+# Now safe to access typed fields
+# For nested results:
+meta, ctxs = result  # if result is a 2-element list
+# For dataclass results:
+print(result.mid_apr)  # if result is a BorosMarketQuote
 ```
 
 ## Error Handling Best Practices
