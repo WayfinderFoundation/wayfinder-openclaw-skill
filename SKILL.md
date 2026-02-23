@@ -369,7 +369,7 @@ Place/cancel orders, update leverage, and withdraw USDC. **These operations are 
 
 | Parameter | Type | Required | Default | Notes |
 |-----------|------|----------|---------|-------|
-| `action` | `place_order` \| `cancel_order` \| `cancel_all_orders` \| `update_leverage` \| `update_isolated_margin` \| `place_trigger_order` \| `withdraw` \| `spot_transfer` \| `hypercore_to_hyperevm` | **Yes** | — | — |
+| `action` | `place_order` \| `cancel_order` \| `update_leverage` \| `withdraw` \| `spot_to_perp_transfer` \| `perp_to_spot_transfer` | **Yes** | — | — |
 | `wallet_label` | string | **Yes** | — | Must resolve to wallet with private key |
 | `coin` | string | **place_order, cancel_order, update_leverage** | — | Or use `asset_id`. Strips `-perp`/`_perp` suffixes automatically |
 | `asset_id` | int | No | — | Direct asset ID (alternative to `coin`) |
@@ -377,7 +377,7 @@ Place/cancel orders, update leverage, and withdraw USDC. **These operations are 
 | `order_type` | `market` \| `limit` | No | `market` | — |
 | `is_buy` | bool | **place_order** | — | `true` or `false` |
 | `size` | float | No | — | **Mutually exclusive with `usd_amount`**; coin units |
-| `usd_amount` | float | No | — | **Mutually exclusive with `size`**; USD amount |
+| `usd_amount` | float | **spot_to_perp_transfer, perp_to_spot_transfer** | — | **Mutually exclusive with `size`** for orders; required for transfers |
 | `usd_amount_kind` | string | **when `usd_amount` is used** | — | `notional` or `margin` |
 | `leverage` | int | **when `usd_amount_kind=margin`; update_leverage** | — | Must be positive |
 | `price` | float | **limit orders** | — | Must be positive |
@@ -387,7 +387,7 @@ Place/cancel orders, update leverage, and withdraw USDC. **These operations are 
 | `order_id` | int | **cancel_order** | — | Or use `cancel_cloid` |
 | `cancel_cloid` | string | No | — | Alternative to `order_id` for cancel |
 | `is_cross` | flag | No | `true` | `--is_cross` / `--no-is_cross` |
-| `amount_usdc` | float | **withdraw, transfers** | — | USDC amount for withdraw or transfers |
+| `amount_usdc` | float | **withdraw** | — | USDC amount for withdraw |
 | `builder_fee_tenths_bp` | int | No | — | Falls back to config default |
 
 **Key validations for `place_order`:**
@@ -421,8 +421,8 @@ poetry run wayfinder hyperliquid_execute --action cancel_order --wallet_label ma
 poetry run wayfinder hyperliquid_execute --action withdraw --wallet_label main --amount_usdc 100
 
 # Transfer USDC between spot and perp wallets
-poetry run wayfinder hyperliquid_execute --action spot_to_perp_transfer --wallet_label main --amount_usdc 50
-poetry run wayfinder hyperliquid_execute --action perp_to_spot_transfer --wallet_label main --amount_usdc 50
+poetry run wayfinder hyperliquid_execute --action spot_to_perp_transfer --wallet_label main --usd_amount 50
+poetry run wayfinder hyperliquid_execute --action perp_to_spot_transfer --wallet_label main --usd_amount 50
 ```
 
 ---

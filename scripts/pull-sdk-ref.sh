@@ -5,7 +5,6 @@
 #   ./pull-sdk-ref.sh <topic>          Show docs for a specific topic
 #   ./pull-sdk-ref.sh --list           List available topics
 #   ./pull-sdk-ref.sh --all            Show all reference docs
-#   ./pull-sdk-ref.sh --commit <hash>  Checkout a specific SDK commit before reading
 #   ./pull-sdk-ref.sh --version        Show the pinned SDK version from sdk-version.md
 #
 # Topics:
@@ -31,32 +30,24 @@
 
 set -euo pipefail
 
-# --- Parse --commit flag ---
-SDK_COMMIT=""
-RESTORE_REF=""
-
-# Check for sdk-version.md file
+# --- Parse flags ---
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 SDK_VERSION_FILE="$REPO_ROOT/sdk-version.md"
+SDK_COMMIT=""
 
 if [[ -f "$SDK_VERSION_FILE" ]]; then
     SDK_COMMIT="$(tr -d '[:space:]' < "$SDK_VERSION_FILE")"
 fi
 
-# Command-line --commit overrides sdk-version.md
 ARGS=()
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --commit)
-            SDK_COMMIT="$2"
-            shift 2
-            ;;
         --version|-v)
             if [[ -n "$SDK_COMMIT" ]]; then
                 echo "Pinned SDK version: $SDK_COMMIT"
             else
-                echo "No SDK version pinned (no sdk-version.md file and no --commit flag)."
+                echo "No SDK version pinned (no sdk-version.md file)."
             fi
             exit 0
             ;;
@@ -88,16 +79,16 @@ else
     exit 1
 fi
 
-# --- Checkout pinned ref if specified ---
+# --- Warn if SDK ref differs from pinned version ---
 if [[ -n "$SDK_COMMIT" ]]; then
-    if (cd "$SDK_ROOT" && git rev-parse --verify -q "$SDK_COMMIT^{commit}" >/dev/null); then
-        RESTORE_REF="$(cd "$SDK_ROOT" && { git symbolic-ref -q --short HEAD 2>/dev/null || git rev-parse HEAD; })"
-        echo "Checking out SDK ref: $SDK_COMMIT" >&2
-        (cd "$SDK_ROOT" && git checkout --quiet "$SDK_COMMIT")
-        trap '(cd "$SDK_ROOT" && git checkout --quiet "$RESTORE_REF") 2>/dev/null' EXIT
-    else
-        echo "WARNING: SDK ref not found in SDK clone: $SDK_COMMIT" >&2
-        echo "         Using the SDK's current ref instead." >&2
+    CURRENT_REF="$(cd "$SDK_ROOT" && git rev-parse HEAD 2>/dev/null)"
+    PINNED_FULL="$(cd "$SDK_ROOT" && git rev-parse --verify -q "$SDK_COMMIT^{commit}" 2>/dev/null || true)"
+    if [[ -z "$PINNED_FULL" ]]; then
+        echo "NOTE: Pinned SDK ref not found in local clone: $SDK_COMMIT" >&2
+        echo "      Reading from the SDK's current ref instead." >&2
+    elif [[ "$CURRENT_REF" != "$PINNED_FULL" ]]; then
+        echo "NOTE: SDK is at $(echo "$CURRENT_REF" | cut -c1-12) but pinned version is $SDK_COMMIT" >&2
+        echo "      Reading from the SDK's current ref." >&2
     fi
 fi
 
@@ -215,7 +206,6 @@ show_list() {
     echo "  $0 <topic>          Show docs for a topic"
     echo "  $0 --all            Show all docs"
     echo "  $0 --list           This list"
-    echo "  $0 --commit <hash>  Checkout a specific SDK commit before reading"
     echo "  $0 --version        Show the pinned SDK version"
     echo ""
     echo "SDK path: $SDK_ROOT"
