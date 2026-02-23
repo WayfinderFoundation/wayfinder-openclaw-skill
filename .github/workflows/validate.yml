@@ -159,7 +159,6 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Validate skill.json structure
-        working-directory: wayfinder
         run: |
           echo "=== Validating skill.json structure ==="
 
@@ -181,7 +180,6 @@ jobs:
           echo "✓ skill.json has valid structure with all required fields"
 
       - name: Validate entry point exists
-        working-directory: wayfinder
         run: |
           echo "=== Validating entry point ==="
           ENTRY=$(jq -r '.entry' skill.json)
@@ -192,7 +190,6 @@ jobs:
           echo "✓ Entry point '$ENTRY' exists"
 
       - name: Validate references exist
-        working-directory: wayfinder
         run: |
           echo "=== Validating references ==="
           REFERENCES=$(jq -r '.references[]?' skill.json 2>/dev/null)
