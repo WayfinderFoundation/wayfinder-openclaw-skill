@@ -80,7 +80,7 @@ The `get_adapter()` helper auto-wires configuration and signing:
 ```python
 from wayfinder_paths.mcp.scripting import get_adapter
 
-# Pattern: get_adapter(AdapterClass, wallet_label, **config_overrides)
+# Pattern: get_adapter(AdapterClass, wallet_label=None, **config_overrides)
 
 # For write operations (need signing)
 from wayfinder_paths.adapters.moonwell_adapter import MoonwellAdapter
@@ -100,7 +100,14 @@ adapter = get_adapter(MoonwellAdapter, "main", config_overrides={"custom_key": "
 2. Finds wallet by label from `config["wallets"]`
 3. Extracts `private_key_hex` and creates a signing callback
 4. Detects the adapter's signing callback parameter names
-5. Passes everything to the adapter constructor
+5. Passes a wallet address **only if the adapter `__init__` accepts it** (e.g. `wallet_address`, `main_wallet_address`, `strategy_wallet_address`)
+6. Instantiates the adapter with `config` + any `config_overrides`
+
+### Read vs write patterns (address decoupling)
+
+- **Prefer explicit accounts for reads:** Many adapters support read-only usage via `get_adapter(Adapter)` *if you pass an `account`/`owner`/`address` parameter to the read method*. This keeps reads decoupled from a specific wallet config.
+- **Writes need a signing wallet:** Use `get_adapter(Adapter, "main")` (or a strategy wallet label when required) for anything that broadcasts transactions.
+- **Some adapters still require a wallet address at init:** A few adapters raise if `wallet_address` is missing even for read-only methods (e.g. ProjectX/Uniswap-style adapters). For those, use `get_adapter(..., "main")` or construct with an explicit `wallet_address=...`.
 
 ## Web3 / RPC Access
 

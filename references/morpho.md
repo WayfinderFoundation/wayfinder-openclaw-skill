@@ -15,7 +15,7 @@ Morpho Blue is an isolated lending market primitive, and MetaMorpho vaults are E
 
 ## Supported chains
 
-Execution calls (lend/borrow/collateral/vault/rewards/operator/allocator) are supported on any `chain_id` present in `MORPHO_BY_CHAIN` (`wayfinder_paths/core/constants/morpho_contracts.py` in the SDK). As of the pinned SDK ref in `wayfinder/sdk-version.md`, Morpho is configured for:
+Execution calls (lend/borrow/collateral/vault/rewards/operator/allocator) are supported on any `chain_id` present in `MORPHO_BY_CHAIN` (`wayfinder_paths/core/constants/morpho_contracts.py` in the SDK). As of the pinned SDK ref in `sdk-version.md`, Morpho is configured for:
 
 | Network | `chain_id` |
 |--------|------------|

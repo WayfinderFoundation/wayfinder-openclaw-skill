@@ -1,6 +1,6 @@
 ---
 name: wayfinder
-description: DeFi trading, yield strategies, and portfolio management via the Wayfinder Paths CLI (`poetry run wayfinder`). Use when the user wants to check balances, swap tokens, bridge assets (BRAP), trade perps (Hyperliquid), trade prediction markets (Polymarket), lend/borrow (Moonwell, HyperLend, Aave V3, Morpho), run automated strategies, manage wallets, discover DeFi pools, manage LP positions (Uniswap V3 / ProjectX), or execute one-off DeFi scripts. Supports Ethereum, Base, Arbitrum, Polygon, BSC, Avalanche, Plasma, and HyperEVM via protocol adapters.
+description: DeFi trading, yield strategies, and portfolio management via the Wayfinder Paths CLI (`poetry run wayfinder`). Use when the user wants to check balances, swap tokens, bridge assets (BRAP), trade perps (Hyperliquid), trade prediction markets (Polymarket), lend/borrow (Moonwell, HyperLend, Aave V3, Morpho), deposit/withdraw vaults (Avantis), run automated strategies, manage wallets, discover DeFi pools, manage LP positions (Uniswap V3 / ProjectX), execute one-off DeFi scripts, or compile/deploy Solidity contracts and interact with deployed contracts. Supports Ethereum, Base, Arbitrum, Polygon, BSC, Avalanche, Plasma, and HyperEVM via protocol adapters.
 metadata: {"openclaw":{"emoji":"🧭","homepage":"https://github.com/WayfinderFoundation/wayfinder-paths-sdk","requires":{"bins":["poetry"]},"install":[{"id":"brew","kind":"brew","formula":"poetry","bins":["poetry"],"label":"Install poetry"}]}}
 ---
 
@@ -40,6 +40,8 @@ The job is to complete the user's request using the Wayfinder tools. When the to
 2) **Adapters next:** if the request needs custom logic, read `references/<protocol>.md`, then confirm exact method names/params in the SDK adapter code.
 3) **Scripts when needed:** write a minimal Python script for multi-step flows (and save it as a reusable snippet in this repo if it's broadly useful).
 4) **Strategies for automation:** promote repeated, policy-driven workflows into strategies (strategies should still call adapters; they don't replace adapter understanding).
+
+**Solidity contracts:** Wayfinder can compile/deploy Solidity contracts and interact with deployed contracts. Use `compile_contract`, `deploy_contract`, `contract_call`, and `contract_execute`, and browse locally-deployed artifacts via `wayfinder://contracts`. See `references/contracts.md` for the workflow and safety notes.
 
 ## Pre-Flight Check
 
@@ -128,7 +130,7 @@ All commands should be run from `$WAYFINDER_SDK_PATH` and require `WAYFINDER_CON
 
 ### `resource` — Read MCP resources by URI
 
-Read-only access to adapters, strategies, wallets, balances, tokens, and Hyperliquid market data via URI-based resources. Use `--list` to see all available resources and templates.
+Read-only access to adapters, strategies, wallets, balances, tokens, Hyperliquid market data, and local contract deployment artifacts via URI-based resources. Use `--list` to see all available resources and templates.
 
 **Asset/data sourcing rule:** When the user asks you to look up token/pool/market/protocol data, first use Wayfinder's adapter/strategy discovery resources (`poetry run wayfinder resource wayfinder://adapters`, `wayfinder://adapters/{name}`, `wayfinder://strategies`, `wayfinder://tokens/*`). Only fall back to other methods if Wayfinder doesn't expose the required data or the user explicitly asks.
 
@@ -147,6 +149,7 @@ poetry run wayfinder resource --list
 | `wayfinder://hyperliquid/prices` | All Hyperliquid mid prices |
 | `wayfinder://hyperliquid/markets` | Perp market metadata, funding rates, and asset contexts |
 | `wayfinder://hyperliquid/spot-assets` | Spot asset metadata |
+| `wayfinder://contracts` | List locally-deployed contracts (artifact store) |
 
 ```bash
 poetry run wayfinder resource wayfinder://adapters
@@ -155,6 +158,7 @@ poetry run wayfinder resource wayfinder://wallets
 poetry run wayfinder resource wayfinder://hyperliquid/prices
 poetry run wayfinder resource wayfinder://hyperliquid/markets
 poetry run wayfinder resource wayfinder://hyperliquid/spot-assets
+poetry run wayfinder resource wayfinder://contracts
 ```
 
 #### Resource Templates
@@ -173,6 +177,7 @@ poetry run wayfinder resource wayfinder://hyperliquid/spot-assets
 | `wayfinder://hyperliquid/{label}/spot` | Spot balances on Hyperliquid for a wallet |
 | `wayfinder://hyperliquid/prices/{coin}` | Mid price for a single coin |
 | `wayfinder://hyperliquid/book/{coin}` | Order book for a coin |
+| `wayfinder://contracts/{chain_id}/{address}` | Get deployed contract metadata + ABI (local artifacts) |
 
 **Token lookup order — always search or use gas endpoint first:**
 
@@ -364,7 +369,7 @@ Place/cancel orders, update leverage, and withdraw USDC. **These operations are 
 
 | Parameter | Type | Required | Default | Notes |
 |-----------|------|----------|---------|-------|
-| `action` | `place_order` \| `cancel_order` \| `cancel_all_orders` \| `update_leverage` \| `update_isolated_margin` \| `place_trigger_order` \| `withdraw` \| `spot_transfer` \| `hypercore_to_hyperevm` | **Yes** | — | — |
+| `action` | `place_order` \| `cancel_order` \| `update_leverage` \| `withdraw` \| `spot_to_perp_transfer` \| `perp_to_spot_transfer` | **Yes** | — | — |
 | `wallet_label` | string | **Yes** | — | Must resolve to wallet with private key |
 | `coin` | string | **place_order, cancel_order, update_leverage** | — | Or use `asset_id`. Strips `-perp`/`_perp` suffixes automatically |
 | `asset_id` | int | No | — | Direct asset ID (alternative to `coin`) |
@@ -372,7 +377,7 @@ Place/cancel orders, update leverage, and withdraw USDC. **These operations are 
 | `order_type` | `market` \| `limit` | No | `market` | — |
 | `is_buy` | bool | **place_order** | — | `true` or `false` |
 | `size` | float | No | — | **Mutually exclusive with `usd_amount`**; coin units |
-| `usd_amount` | float | No | — | **Mutually exclusive with `size`**; USD amount |
+| `usd_amount` | float | **spot_to_perp_transfer, perp_to_spot_transfer** | — | **Mutually exclusive with `size`** for orders; required for transfers |
 | `usd_amount_kind` | string | **when `usd_amount` is used** | — | `notional` or `margin` |
 | `leverage` | int | **when `usd_amount_kind=margin`; update_leverage** | — | Must be positive |
 | `price` | float | **limit orders** | — | Must be positive |
@@ -382,7 +387,7 @@ Place/cancel orders, update leverage, and withdraw USDC. **These operations are 
 | `order_id` | int | **cancel_order** | — | Or use `cancel_cloid` |
 | `cancel_cloid` | string | No | — | Alternative to `order_id` for cancel |
 | `is_cross` | flag | No | `true` | `--is_cross` / `--no-is_cross` |
-| `amount_usdc` | float | **withdraw, transfers** | — | USDC amount for withdraw or transfers |
+| `amount_usdc` | float | **withdraw** | — | USDC amount for withdraw |
 | `builder_fee_tenths_bp` | int | No | — | Falls back to config default |
 
 **Key validations for `place_order`:**
@@ -416,8 +421,8 @@ poetry run wayfinder hyperliquid_execute --action cancel_order --wallet_label ma
 poetry run wayfinder hyperliquid_execute --action withdraw --wallet_label main --amount_usdc 100
 
 # Transfer USDC between spot and perp wallets
-poetry run wayfinder hyperliquid_execute --action spot_to_perp_transfer --wallet_label main --amount_usdc 50
-poetry run wayfinder hyperliquid_execute --action perp_to_spot_transfer --wallet_label main --amount_usdc 50
+poetry run wayfinder hyperliquid_execute --action spot_to_perp_transfer --wallet_label main --usd_amount 50
+poetry run wayfinder hyperliquid_execute --action perp_to_spot_transfer --wallet_label main --usd_amount 50
 ```
 
 ---
@@ -585,6 +590,113 @@ poetry run wayfinder run_script --script_path .wayfinder_runs/my_flow.py --args 
 
 # With timeout
 poetry run wayfinder run_script --script_path .wayfinder_runs/my_flow.py --wallet_label main --timeout_s 120
+```
+
+---
+
+### `compile_contract` — Compile Solidity contracts (read-only)
+
+Compile a Solidity `.sol` file with OpenZeppelin import support.
+
+| Parameter | Type | Required | Default | Notes |
+|-----------|------|----------|---------|-------|
+| `source_path` | string | **Yes** | — | Must be a `.sol` file inside the repo (or scratch dir inside the repo) |
+| `contract_name` | string | No | — | Optional: validate/select a specific contract from the compilation output |
+
+```bash
+poetry run wayfinder compile_contract --source_path .wayfinder_runs/MyToken.sol
+poetry run wayfinder compile_contract --source_path .wayfinder_runs/MyToken.sol --contract_name MyToken
+```
+
+---
+
+### `deploy_contract` — Deploy a Solidity contract (fund-moving)
+
+Compile, deploy, and optionally verify a Solidity contract. **This broadcasts a transaction**.
+
+| Parameter | Type | Required | Default | Notes |
+|-----------|------|----------|---------|-------|
+| `wallet_label` | string | **Yes** | — | Must resolve to a wallet with `address` + `private_key_hex` |
+| `source_path` | string | **Yes** | — | Solidity `.sol` file inside the repo |
+| `contract_name` | string | **Yes** | — | Contract name to deploy from compilation output |
+| `chain_id` | int | **Yes** | — | Target chain id |
+| `constructor_args` | string (JSON) | No | — | JSON array string (e.g. `'["0xabc...", 1000]'`) |
+| `verify` | bool | No | `true` | Verification uses Etherscan V2 (API key required); deploy works without it |
+
+```bash
+# Deploy (no constructor args)
+poetry run wayfinder deploy_contract --wallet_label main --source_path .wayfinder_runs/Counter.sol --contract_name Counter --chain_id 8453
+
+# Deploy with constructor args + skip verification
+poetry run wayfinder deploy_contract --wallet_label main --source_path .wayfinder_runs/MyToken.sol --contract_name MyToken --chain_id 8453 --constructor_args '[1000000]' --verify false
+```
+
+**Artifacts:** successful deploys are persisted under `.wayfinder_runs/contracts/...` and can be browsed via `wayfinder://contracts`.
+
+---
+
+### `contract_get_abi` — Fetch contract ABI (read-only)
+
+Fetch ABI for a deployed contract via Etherscan V2 (optionally resolves common proxy patterns first).
+
+| Parameter | Type | Required | Default | Notes |
+|-----------|------|----------|---------|-------|
+| `chain_id` | int | **Yes** | — | Target chain id |
+| `contract_address` | string | **Yes** | — | Contract address |
+| `resolve_proxy` | bool | No | `true` | Attempt proxy implementation resolution (EIP-1967 / ZeppelinOS / EIP-897) |
+
+```bash
+poetry run wayfinder contract_get_abi --chain_id 8453 --contract_address 0xabc123...
+```
+
+---
+
+### `contract_call` — Read from a deployed contract (read-only)
+
+Read contract state via `eth_call`.
+
+| Parameter | Type | Required | Default | Notes |
+|-----------|------|----------|---------|-------|
+| `chain_id` | int | **Yes** | — | Target chain id |
+| `contract_address` | string | **Yes** | — | Contract address |
+| `function_name` | string | No | — | Use only for non-overloaded functions |
+| `function_signature` | string | No | — | Prefer for overloaded functions (e.g. `balanceOf(address)`) |
+| `args` | string (JSON) | No | — | JSON array string |
+| `value_wei` | int | No | `0` | For payable calls (rare for `eth_call`) |
+| `from_address` | string | No | — | Optional `from` for `eth_call` |
+| `wallet_label` | string | No | — | Alternative to `from_address` (uses wallet address only; no signing) |
+| `abi` | string (JSON) | No | — | Inline ABI JSON (minimal ABI recommended) |
+| `abi_path` | string | No | — | Path to a `.json` ABI file inside this repo |
+
+**ABI resolution:** if you omit `abi` and `abi_path`, the tool checks the local artifact store first (for contracts deployed via `deploy_contract`), then falls back to Etherscan V2 (requires API key + verified contract).
+
+```bash
+poetry run wayfinder contract_call --chain_id 8453 --contract_address 0xabc123... --function_signature "balanceOf(address)" --args '["0x..."]'
+```
+
+---
+
+### `contract_execute` — Execute a contract write (fund-moving)
+
+Encode calldata and broadcast a state-changing transaction. **This moves funds / changes state.**
+
+| Parameter | Type | Required | Default | Notes |
+|-----------|------|----------|---------|-------|
+| `wallet_label` | string | **Yes** | — | Must resolve to a wallet with `address` + `private_key_hex` |
+| `chain_id` | int | **Yes** | — | Target chain id |
+| `contract_address` | string | **Yes** | — | Contract address |
+| `function_name` | string | No | — | Use only for non-overloaded functions |
+| `function_signature` | string | No | — | Prefer for overloaded functions |
+| `args` | string (JSON) | No | — | JSON array string |
+| `value_wei` | int | No | `0` | ETH value to send for payable functions |
+| `abi` | string (JSON) | No | — | Inline ABI JSON (minimal ABI recommended) |
+| `abi_path` | string | No | — | Path to a `.json` ABI file inside this repo |
+| `wait_for_receipt` | bool | No | `true` | If `false`, return after broadcast |
+
+**Safety:** always require explicit user confirmation before running `contract_execute`.
+
+```bash
+poetry run wayfinder contract_execute --wallet_label main --chain_id 8453 --contract_address 0xabc123... --function_signature "transfer(address,uint256)" --args '["0x...", 123]'
 ```
 
 ---

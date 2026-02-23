@@ -20,7 +20,7 @@ jobs:
       - name: Read pinned SDK version
         id: sdk-version
         run: |
-          SDK_COMMIT=$(cat wayfinder-openclaw/wayfinder/sdk-version.md | tr -d '[:space:]')
+          SDK_COMMIT=$(cat wayfinder-openclaw/sdk-version.md | tr -d '[:space:]')
           echo "commit=$SDK_COMMIT" >> "$GITHUB_OUTPUT"
           echo "Pinned SDK ref: $SDK_COMMIT"
 
@@ -60,9 +60,16 @@ jobs:
           poetry run wayfinder execute --help > ../wayfinder-openclaw/cli-help-output/commands/execute-help.txt 2>&1 || true
           poetry run wayfinder hyperliquid --help > ../wayfinder-openclaw/cli-help-output/commands/hyperliquid-help.txt 2>&1 || true
           poetry run wayfinder hyperliquid_execute --help > ../wayfinder-openclaw/cli-help-output/commands/hyperliquid_execute-help.txt 2>&1 || true
+          poetry run wayfinder polymarket --help > ../wayfinder-openclaw/cli-help-output/commands/polymarket-help.txt 2>&1 || true
+          poetry run wayfinder polymarket_execute --help > ../wayfinder-openclaw/cli-help-output/commands/polymarket_execute-help.txt 2>&1 || true
           poetry run wayfinder run_strategy --help > ../wayfinder-openclaw/cli-help-output/commands/run_strategy-help.txt 2>&1 || true
           poetry run wayfinder wallets --help > ../wayfinder-openclaw/cli-help-output/commands/wallets-help.txt 2>&1 || true
           poetry run wayfinder run_script --help > ../wayfinder-openclaw/cli-help-output/commands/run_script-help.txt 2>&1 || true
+          poetry run wayfinder compile_contract --help > ../wayfinder-openclaw/cli-help-output/commands/compile_contract-help.txt 2>&1 || true
+          poetry run wayfinder deploy_contract --help > ../wayfinder-openclaw/cli-help-output/commands/deploy_contract-help.txt 2>&1 || true
+          poetry run wayfinder contract_get_abi --help > ../wayfinder-openclaw/cli-help-output/commands/contract_get_abi-help.txt 2>&1 || true
+          poetry run wayfinder contract_call --help > ../wayfinder-openclaw/cli-help-output/commands/contract_call-help.txt 2>&1 || true
+          poetry run wayfinder contract_execute --help > ../wayfinder-openclaw/cli-help-output/commands/contract_execute-help.txt 2>&1 || true
 
           echo "=== Generating resource list ==="
           poetry run wayfinder resource --list > ../wayfinder-openclaw/cli-help-output/resources/resource-list.txt 2>&1 || true
@@ -71,6 +78,8 @@ jobs:
           # Static resources that don't require parameters
           poetry run wayfinder resource wayfinder://adapters > ../wayfinder-openclaw/cli-help-output/resources/adapters.json 2>&1 || true
           poetry run wayfinder resource wayfinder://strategies > ../wayfinder-openclaw/cli-help-output/resources/strategies.json 2>&1 || true
+          poetry run wayfinder resource wayfinder://contracts > ../wayfinder-openclaw/cli-help-output/resources/contracts.json 2>&1 || true
+          poetry run wayfinder resource wayfinder://wallets > ../wayfinder-openclaw/cli-help-output/resources/wallets.json 2>&1 || true
           poetry run wayfinder resource wayfinder://hyperliquid/prices > ../wayfinder-openclaw/cli-help-output/resources/hyperliquid-prices.json 2>&1 || true
           poetry run wayfinder resource wayfinder://hyperliquid/markets > ../wayfinder-openclaw/cli-help-output/resources/hyperliquid-markets.json 2>&1 || true
           poetry run wayfinder resource wayfinder://hyperliquid/spot-assets > ../wayfinder-openclaw/cli-help-output/resources/hyperliquid-spot-assets.json 2>&1 || true
@@ -113,16 +122,27 @@ jobs:
           - Missing or outdated examples
           - Any other documentation drift
 
+          Classify each issue by severity:
+          - CRITICAL: Commands/parameters that are completely wrong or would cause runtime errors
+          - MAJOR: Significant parameter mismatches, wrong types, or missing required documentation
+          - MINOR: Cosmetic issues, slightly outdated descriptions, formatting inconsistencies
+
           Output a structured report with:
-          1. Summary of findings - output exactly 'VALIDATION_RESULT: PASS' or 'VALIDATION_RESULT: FAIL' on its own line
-          2. Detailed list of issues found (if any)
+          1. Summary of findings - output exactly one of these on its own line:
+             - 'VALIDATION_RESULT: PASS' if no issues found
+             - 'VALIDATION_RESULT: WARN' if only MINOR issues found
+             - 'VALIDATION_RESULT: FAIL' if any CRITICAL or MAJOR issues found
+          2. Detailed list of issues found (if any) with severity labels
           3. Recommendations for fixes
           " | tee validation-output.txt
 
-          # Check if validation passed or failed
+          # Check if validation passed or failed (WARN is acceptable)
           if grep -q "VALIDATION_RESULT: FAIL" validation-output.txt; then
             echo "::error::CLI help validation failed - see report above for details"
             exit 1
+          elif grep -q "VALIDATION_RESULT: WARN" validation-output.txt; then
+            echo "::warning::CLI help validation passed with minor issues - see report above"
+            exit 0
           elif grep -q "VALIDATION_RESULT: PASS" validation-output.txt; then
             echo "CLI help validation passed"
             exit 0
@@ -139,7 +159,6 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Validate skill.json structure
-        working-directory: wayfinder
         run: |
           echo "=== Validating skill.json structure ==="
 
@@ -161,7 +180,6 @@ jobs:
           echo "✓ skill.json has valid structure with all required fields"
 
       - name: Validate entry point exists
-        working-directory: wayfinder
         run: |
           echo "=== Validating entry point ==="
           ENTRY=$(jq -r '.entry' skill.json)
@@ -172,7 +190,6 @@ jobs:
           echo "✓ Entry point '$ENTRY' exists"
 
       - name: Validate references exist
-        working-directory: wayfinder
         run: |
           echo "=== Validating references ==="
           REFERENCES=$(jq -r '.references[]?' skill.json 2>/dev/null)
@@ -227,16 +244,27 @@ jobs:
              - Resources in skill.json must be documented with usage examples
              - No orphaned documentation (documented features that don't exist in skill.json)
 
+          Classify each issue by severity:
+          - CRITICAL: Missing commands, broken references, or structural errors that break the skill
+          - MAJOR: Significant parameter mismatches, missing documentation sections, or wrong types
+          - MINOR: Cosmetic issues, slightly outdated descriptions, formatting inconsistencies
+
           Output a structured report with:
-          1. Summary - output exactly 'VALIDATION_RESULT: PASS' or 'VALIDATION_RESULT: FAIL' on its own line
-          2. Detailed findings for each category
+          1. Summary - output exactly one of these on its own line:
+             - 'VALIDATION_RESULT: PASS' if no issues found
+             - 'VALIDATION_RESULT: WARN' if only MINOR issues found
+             - 'VALIDATION_RESULT: FAIL' if any CRITICAL or MAJOR issues found
+          2. Detailed findings for each category with severity labels
           3. Recommendations if any issues found
           " | tee skill-validation-output.txt
 
-          # Check if validation passed or failed
+          # Check if validation passed or failed (WARN is acceptable)
           if grep -q "VALIDATION_RESULT: FAIL" skill-validation-output.txt; then
             echo "::error::Agent skill validation failed - see report above for details"
             exit 1
+          elif grep -q "VALIDATION_RESULT: WARN" skill-validation-output.txt; then
+            echo "::warning::Agent skill validation passed with minor issues - see report above"
+            exit 0
           elif grep -q "VALIDATION_RESULT: PASS" skill-validation-output.txt; then
             echo "Agent skill validation passed"
             exit 0
