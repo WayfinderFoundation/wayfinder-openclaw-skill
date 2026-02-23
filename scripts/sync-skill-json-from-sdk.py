@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Sync wayfinder/skill.json commands + resources from wayfinder-paths-sdk.
+"""Sync skill.json commands + resources from wayfinder-paths-sdk.
 
 This repo is the source of truth for the OpenClaw/ClawHub skill packaging, but
 the CLI surface area is defined by the Wayfinder Paths SDK MCP server.
@@ -7,7 +7,7 @@ the CLI surface area is defined by the Wayfinder Paths SDK MCP server.
 What this script updates:
 - skill.json.commands (adds/removes tools, excluding runner)
 - skill.json.resources.static/templates (from mcp.resource(...) URIs)
-- skill.json.sdk_version (from wayfinder/sdk-version.md)
+- skill.json.sdk_version (from sdk-version.md)
 
 It does NOT attempt to rewrite SKILL.md or reference docs.
 """
@@ -23,15 +23,14 @@ from pathlib import Path
 
 
 def _repo_root() -> Path:
-    return Path(__file__).resolve().parents[2]
+    return Path(__file__).resolve().parents[1]
+
+def _skill_json_path(repo_root: Path) -> Path:
+    return repo_root / "skill.json"
 
 
-def _skill_dir() -> Path:
-    return _repo_root() / "wayfinder"
-
-
-def _sdk_ref() -> str:
-    ref = (_skill_dir() / "sdk-version.md").read_text(encoding="utf-8").strip()
+def _sdk_ref(repo_root: Path) -> str:
+    ref = (repo_root / "sdk-version.md").read_text(encoding="utf-8").strip()
     return ref or "main"
 
 
@@ -39,6 +38,10 @@ def _find_sdk_root(repo_root: Path) -> Path:
     env = os.getenv("WAYFINDER_SDK_PATH", "").strip()
     if env and Path(env).expanduser().is_dir():
         return Path(env).expanduser().resolve()
+
+    docs = (Path.home() / "Documents" / "wayfinder-paths-sdk").resolve()
+    if docs.is_dir():
+        return docs
 
     sibling = (repo_root.parent / "wayfinder-paths-sdk").resolve()
     if sibling.is_dir():
@@ -98,10 +101,10 @@ def _ordered_unique(items: list[str]) -> list[str]:
 
 def main() -> int:
     repo_root = _repo_root()
-    skill_json_path = _skill_dir() / "skill.json"
+    skill_json_path = _skill_json_path(repo_root)
     sdk_root = _find_sdk_root(repo_root)
 
-    sdk_ref = _sdk_ref()
+    sdk_ref = _sdk_ref(repo_root)
     do_checkout = "--checkout" in sys.argv[1:]
     restore_ref = _git_current_ref(sdk_root) if do_checkout else None
 
@@ -132,6 +135,11 @@ def main() -> int:
             "run_strategy",
             "wallets",
             "run_script",
+            "compile_contract",
+            "deploy_contract",
+            "contract_get_abi",
+            "contract_call",
+            "contract_execute",
         ]
         tools_set = set(tool_names)
 

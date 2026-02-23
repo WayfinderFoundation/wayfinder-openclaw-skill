@@ -6,7 +6,7 @@ OpenClaw (Moltbot) skill provider for [Wayfinder Paths SDK](https://github.com/W
 
 | Skill | Description |
 |-------|-------------|
-| [wayfinder](wayfinder/SKILL.md) | DeFi trading, yield strategies, portfolio management, perps, and protocol adapters (Hyperliquid, Polymarket, Moonwell, Pendle, Uniswap, ProjectX, etc.) |
+| [wayfinder](SKILL.md) | DeFi trading, yield strategies, portfolio management, perps, and protocol adapters (Hyperliquid, Polymarket, Moonwell, Pendle, Uniswap, ProjectX, etc.) |
 
 ## Setup
 
@@ -27,4 +27,4 @@ export WAYFINDER_CONFIG_PATH="${WAYFINDER_CONFIG_PATH:-$WAYFINDER_SDK_PATH/confi
 poetry run wayfinder resource wayfinder://strategies
 ```
 
-See [references/setup.md](wayfinder/references/setup.md) for detailed instructions.
+See [references/setup.md](references/setup.md) for detailed instructions.

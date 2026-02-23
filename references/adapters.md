@@ -121,6 +121,17 @@ Market discovery + position reads for Morpho Blue, MetaMorpho vault discovery, r
 
 See [morpho.md](morpho.md) for details.
 
+### Avantis Adapter (`avantis_adapter`)
+
+- **Type**: `AVANTIS`
+- **Module**: `wayfinder_paths.adapters.avantis_adapter.adapter.AvantisAdapter`
+- **Protocol**: Avantis avUSDC ERC-4626 vault (Base)
+- **Capabilities**: `market.list`, `position.read`, `vault.deposit`, `vault.withdraw`
+
+ERC-4626 vault integration for depositing USDC into the Avantis avUSDC vault (Base) and redeeming shares back to USDC.
+
+See [avantis.md](avantis.md) for details.
+
 ### Hyperliquid Adapter (`hyperliquid_adapter`)
 
 - **Type**: `HYPERLIQUID`
