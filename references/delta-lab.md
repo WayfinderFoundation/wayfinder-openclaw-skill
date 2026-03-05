@@ -28,6 +28,45 @@ poetry run wayfinder resource wayfinder://delta-lab/assets/12345
 Notes:
 - The `{chain}`/`{chain_id}` path segment accepts a **chain code** (`base`, `arbitrum`, …) or a numeric chain id (`8453`, `42161`, …).
 
+## Basis info (symbol → basis group)
+
+Use this when you have a symbol and want to know its **basis root** (used by the screen endpoints).
+
+```bash
+# List basis roots that Delta Lab tracks
+poetry run wayfinder resource wayfinder://delta-lab/symbols
+
+# Map a symbol to its basis group/root symbol (if it belongs to one)
+poetry run wayfinder resource wayfinder://delta-lab/ETH/basis
+```
+
+Returns a JSON payload like:
+- `asset_id`, `symbol`, and
+- `basis` (either an object with `root_symbol`/`role`, or `null` if the symbol isn’t in a basis group).
+
+## Timeseries (snapshots)
+
+Quick timeseries pulls for a symbol. This is useful for small charts and sanity checks (not long-horizon research).
+
+```bash
+# ETH price timeseries (7d lookback, 200 points)
+poetry run wayfinder resource wayfinder://delta-lab/ETH/timeseries/price/7/200
+
+# ETH funding timeseries
+poetry run wayfinder resource wayfinder://delta-lab/ETH/timeseries/funding/30/500
+
+# Multiple series (comma-separated)
+poetry run wayfinder resource wayfinder://delta-lab/ETH/timeseries/price,funding/30/200
+```
+
+Parameters:
+- `{symbol}`: asset symbol (e.g. `ETH`, `BTC`). Start from `wayfinder://delta-lab/symbols` or `assets/search/...` if unsure.
+- `{series}`: `price`, `funding`, `lending`, `yield`, `pendle`, `boros`, or `rates` (alias for all rate series). Comma-separated lists are supported.
+- `{lookback_days}`: integer days to look back (keep small for quick snapshots).
+- `{limit}`: max points per series (1–10000).
+
+Returns a dict keyed by series name, where each value is a list of rows with a `ts` timestamp and series-specific columns.
+
 ## Screens
 
 ### Top opportunities
