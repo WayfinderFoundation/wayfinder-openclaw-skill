@@ -230,7 +230,7 @@ Create, annotate, and discover cross-protocol positions. Use `resource wayfinder
 | `annotate_action` | string | **annotate** | — | Action being annotated |
 | `tool` | string | **annotate** | — | Tool name for annotation |
 | `status` | string | **annotate** | — | Status for annotation |
-| `chain_id` | int | No | — | Optional per-chain query override (only used by some protocols) |
+| `chain_id` | string | No | — | Optional per-chain query override (numeric chain id as text; only used by some protocols) |
 | `details` | string (JSON) | No | — | Extra metadata for annotation |
 | `protocols` | string (JSON) | No | — | Filter `discover_portfolio` to specific protocols |
 | `parallel` | bool | No | `false` | **Required if querying >= 3 protocols** without a `protocols` filter |
@@ -296,7 +296,7 @@ Execute swaps, token sends, or Hyperliquid deposits. **This broadcasts transacti
 | `deadline_seconds` | int | No | `300` | Swap only |
 | `recipient` | string | **send** | — | Recipient address |
 | `token` | string | **send** | — | Token ID (or `"native"` with `chain_id`). **Always search first.** |
-| `chain_id` | int | No | — | Required for `send` when `token="native"` |
+| `chain_id` | string | No | — | Required for `send` when `token="native"` (numeric chain id as text) |
 
 **Hyperliquid deposit validations (critical):**
 - Amount **must be >= 5 USDC** (deposits below 5 are lost on the bridge).
@@ -377,14 +377,14 @@ Place/cancel orders, update leverage, withdraw USDC, and transfer USDC between s
 | `action` | `place_order` \| `place_trigger_order` \| `cancel_order` \| `update_leverage` \| `withdraw` \| `spot_to_perp_transfer` \| `perp_to_spot_transfer` | **Yes** | — | — |
 | `wallet_label` | string | **Yes** | — | Must resolve to wallet with private key |
 | `coin` | string | **place_order, place_trigger_order, cancel_order, update_leverage** | — | Or use `asset_id`. Strips `-perp`/`_perp` suffixes automatically |
-| `asset_id` | int | No | — | Direct asset ID (alternative to `coin`) |
+| `asset_id` | string | No | — | Direct asset ID (numeric; alternative to `coin`) |
 | `is_spot` | bool | No | — | `true` for spot orders, `false` for perp. **Must be explicit for place_order.** |
 | `order_type` | `market` \| `limit` | No | `market` | — |
 | `is_buy` | bool | **place_order, place_trigger_order** | — | `true` or `false` |
 | `size` | float | No | — | **Mutually exclusive with `usd_amount`**; coin units |
 | `usd_amount` | float | **spot_to_perp_transfer, perp_to_spot_transfer** | — | **Orders:** mutually exclusive with `size`. **Transfers:** required. |
-| `usd_amount_kind` | string | **when `usd_amount` is used** | — | `notional` or `margin` |
-| `leverage` | int | **when `usd_amount_kind=margin`; update_leverage** | — | Must be positive |
+| `usd_amount_kind` | string | **perp `usd_amount` orders** | — | Perp only: `notional` or `margin`. Spot treats `usd_amount` as notional. |
+| `leverage` | string | **when `usd_amount_kind=margin`; update_leverage** | — | Must be a positive integer |
 | `price` | float | **limit orders** | — | Must be positive (also used for limit trigger orders when `is_market_trigger=false`) |
 | `trigger_price` | float | **place_trigger_order** | — | Trigger price (must be positive) |
 | `tpsl` | string | **place_trigger_order** | — | `"tp"` (take-profit) or `"sl"` (stop-loss) |
@@ -392,15 +392,15 @@ Place/cancel orders, update leverage, withdraw USDC, and transfer USDC between s
 | `slippage` | float | No | `0.01` | Market orders only; 0–0.25 (25% cap) |
 | `reduce_only` | flag | No | `false` | `--reduce_only` / `--no-reduce_only` |
 | `cloid` | string | No | — | Client order ID |
-| `order_id` | int | **cancel_order** | — | Or use `cancel_cloid` |
+| `order_id` | string | **cancel_order** | — | Or use `cancel_cloid` |
 | `cancel_cloid` | string | No | — | Alternative to `order_id` for cancel |
 | `is_cross` | flag | No | `true` | `--is_cross` / `--no-is_cross` |
 | `amount_usdc` | float | **withdraw** | — | USDC amount for withdraw (transfers use `usd_amount`) |
-| `builder_fee_tenths_bp` | int | No | — | Falls back to config default |
+| `builder_fee_tenths_bp` | string | No | — | Falls back to config default (positive integer, tenths of a bp) |
 
 **Key validations for `place_order`:**
 - Exactly one of `size` or `usd_amount` (not both, not neither).
-- If `usd_amount` is used, `usd_amount_kind` is required.
+- For perp orders: if `usd_amount` is used, `usd_amount_kind` is required (`notional` or `margin`). Spot treats `usd_amount` as notional.
 - If `usd_amount_kind=margin`, then `leverage` is required.
 - Limit orders require `price` > 0.
 - After lot-size rounding, size must still be > 0.
@@ -463,6 +463,8 @@ Read-only access to Polymarket markets, prices, order books, and user status.
 | `keep_closed_markets` | bool | No | `false` | `search` |
 | `rerank` | bool | No | `true` | `search` |
 | `offset` | int | No | `0` | `trending` |
+| `events_status` | string | No | `"active"` | `search` only. One of `active`, `closed`, `archived` |
+| `end_date_min` | string | No | `YYYY-MM-DD` | `search` only. Min event end date (UTC) |
 | `market_slug` | string | **get_market** | — | Market slug |
 | `event_slug` | string | **get_event** | — | Event slug |
 | `token_id` | string | **price, order_book, price_history** | — | Polymarket CLOB token id (optional for `open_orders` filter) |
