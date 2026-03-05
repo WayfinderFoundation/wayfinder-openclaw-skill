@@ -380,7 +380,7 @@ Place/cancel orders, update leverage, withdraw USDC, and transfer USDC between s
 | `order_type` | `market` \| `limit` | No | `market` | — |
 | `is_buy` | bool | **place_order, place_trigger_order** | — | `true` or `false` |
 | `size` | float | No | — | **Mutually exclusive with `usd_amount`**; coin units |
-| `usd_amount` | float | No | — | **Orders:** mutually exclusive with `size`. **Transfers:** required. |
+| `usd_amount` | float | **spot_to_perp_transfer, perp_to_spot_transfer** | — | **Orders:** mutually exclusive with `size`. **Transfers:** required. |
 | `usd_amount_kind` | string | **when `usd_amount` is used** | — | `notional` or `margin` |
 | `leverage` | int | **when `usd_amount_kind=margin`; update_leverage** | — | Must be positive |
 | `price` | float | **limit orders** | — | Must be positive (also used for limit trigger orders when `is_market_trigger=false`) |
@@ -947,14 +947,11 @@ Before writing any script, **pull the detailed reference docs** for the adapter 
 
 # Check the pinned SDK version
 ./scripts/pull-sdk-ref.sh --version
-
-# Override with a specific commit
-./scripts/pull-sdk-ref.sh --commit abc123 moonwell
 ```
 
-**Available topics:** `strategies`, `setup`, `data`, `brap`, `aave`, `morpho`, `moonwell`, `hyperlend`, `pendle`, `boros`, `hyperliquid`, `polymarket`, `uniswap`, `projectx`, `simulation`, `promote`
+**Available topics:** `contracts`, `simulation`, `adapters`, `strategies`, `setup`, `brap`, `boros`, `ccxt`, `coding`, `hyperlend`, `hyperliquid`, `polymarket`, `moonwell`, `pendle`, `uniswap`, `projectx`, `aave`, `morpho`, `delta-lab`, `data`
 
-The SDK ref is tracked in `.sdk-version` (default: `main`). The pull script checks out that ref when reading docs, then restores the SDK to its previous state.
+The pinned SDK ref is tracked in `sdk-version.md` (a commit hash). `pull-sdk-ref.sh` reads docs from your local SDK checkout and **warns** if the SDK ref doesn’t match the pinned version.
 
 **Always run this before writing a script** — the docs cover critical details like:
 - Exact method signatures and required parameters
