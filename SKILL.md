@@ -150,6 +150,7 @@ poetry run wayfinder resource --list
 | `wayfinder://hyperliquid/markets` | Perp market metadata, funding rates, and asset contexts |
 | `wayfinder://hyperliquid/spot-assets` | Spot asset metadata |
 | `wayfinder://contracts` | List locally-deployed contracts (artifact store) |
+| `wayfinder://delta-lab/symbols` | Delta Lab basis symbols (for market screens) |
 
 ```bash
 poetry run wayfinder resource wayfinder://adapters
@@ -159,6 +160,7 @@ poetry run wayfinder resource wayfinder://hyperliquid/prices
 poetry run wayfinder resource wayfinder://hyperliquid/markets
 poetry run wayfinder resource wayfinder://hyperliquid/spot-assets
 poetry run wayfinder resource wayfinder://contracts
+poetry run wayfinder resource wayfinder://delta-lab/symbols
 ```
 
 #### Resource Templates
@@ -178,6 +180,10 @@ poetry run wayfinder resource wayfinder://contracts
 | `wayfinder://hyperliquid/prices/{coin}` | Mid price for a single coin |
 | `wayfinder://hyperliquid/book/{coin}` | Order book for a coin |
 | `wayfinder://contracts/{chain_id}/{address}` | Get deployed contract metadata + ABI (local artifacts) |
+| `wayfinder://delta-lab/{symbol}/basis` | Delta Lab: map an asset symbol to its basis group/root symbol (see `references/delta-lab.md`) |
+| `wayfinder://delta-lab/{symbol}/timeseries/{series}/{lookback_days}/{limit}` | Delta Lab: timeseries snapshot for one symbol + series (see `references/delta-lab.md`) |
+
+**Delta Lab market screens:** see `references/delta-lab.md` (asset lookup + price/perp/lending/borrow-route screens).
 
 **Token lookup order — always search or use gas endpoint first:**
 
@@ -224,7 +230,7 @@ Create, annotate, and discover cross-protocol positions. Use `resource wayfinder
 | `annotate_action` | string | **annotate** | — | Action being annotated |
 | `tool` | string | **annotate** | — | Tool name for annotation |
 | `status` | string | **annotate** | — | Status for annotation |
-| `chain_id` | int | No | — | Optional per-chain query override (only used by some protocols) |
+| `chain_id` | string | No | — | Optional per-chain query override (numeric chain id as text; only used by some protocols) |
 | `details` | string (JSON) | No | — | Extra metadata for annotation |
 | `protocols` | string (JSON) | No | — | Filter `discover_portfolio` to specific protocols |
 | `parallel` | bool | No | `false` | **Required if querying >= 3 protocols** without a `protocols` filter |
@@ -264,12 +270,11 @@ Returns a quote for swapping or bridging tokens. No on-chain effects.
 
 **Note:** Native gas tokens (e.g., unwrapped ETH) may fail in swaps with `from_token_address: null`. Use the wrapped ERC20 version instead (e.g., WETH). Search for it: `resource wayfinder://tokens/search/<chain>/weth`.
 
-**Bridging to a new chain for the first time:** the wallet needs **native gas on the destination chain** before it can do anything. Bridge the native gas token (e.g. ETH) to the destination chain first, then bridge or swap for the target token. Use the native token IDs from the supported-chains table below (e.g. `ethereum-base` for ETH on Base).
-- Use the native token IDs from the supported-chains table below when bridging gas (e.g. `ethereum-base` for ETH on Base, `plasma-plasma` for PLASMA on Plasma).
+- **Before any on-chain operation**, check the wallet has native gas on that chain using `wayfinder://balances/{label}`.
+- If bridging to a new chain for the first time: bridge gas first. If you need the native token ID, look it up via `wayfinder://tokens/search/{chain_code}/{query}` (or `wayfinder://tokens/gas/{chain_code}` for native gas metadata).
 
 ```bash
 poetry run wayfinder quote_swap --wallet_label main --from_token usd-coin-base --to_token ethereum-base --amount 500
-poetry run wayfinder quote_swap --wallet_label main --from_token "USDC-base" --to_token "ETH-base" --amount 1000 --slippage_bps 100
 ```
 
 **Errors:** `not_found` (wallet), `invalid_wallet`, `token_error`, `invalid_token` (missing chain_id/address), `invalid_amount`, `quote_error`.
@@ -291,7 +296,7 @@ Execute swaps, token sends, or Hyperliquid deposits. **This broadcasts transacti
 | `deadline_seconds` | int | No | `300` | Swap only |
 | `recipient` | string | **send** | — | Recipient address |
 | `token` | string | **send** | — | Token ID (or `"native"` with `chain_id`). **Always search first.** |
-| `chain_id` | int | No | — | Required for `send` when `token="native"` |
+| `chain_id` | string | No | — | Required for `send` when `token="native"` (numeric chain id as text) |
 
 **Hyperliquid deposit validations (critical):**
 - Amount **must be >= 5 USDC** (deposits below 5 are lost on the bridge).
@@ -365,51 +370,61 @@ poetry run wayfinder resource wayfinder://hyperliquid/book/ETH
 
 ### `hyperliquid_execute` — Hyperliquid trading operations
 
-Place/cancel orders, update leverage, and withdraw USDC. **These operations are live** and can place real orders / move real funds.
+Place/cancel orders, update leverage, withdraw USDC, and transfer USDC between spot/perp balances. **These operations are live** and can place real orders / move real funds.
 
 | Parameter | Type | Required | Default | Notes |
 |-----------|------|----------|---------|-------|
-| `action` | `place_order` \| `cancel_order` \| `update_leverage` \| `withdraw` \| `spot_to_perp_transfer` \| `perp_to_spot_transfer` | **Yes** | — | — |
+| `action` | `place_order` \| `place_trigger_order` \| `cancel_order` \| `update_leverage` \| `withdraw` \| `spot_to_perp_transfer` \| `perp_to_spot_transfer` | **Yes** | — | — |
 | `wallet_label` | string | **Yes** | — | Must resolve to wallet with private key |
-| `coin` | string | **place_order, cancel_order, update_leverage** | — | Or use `asset_id`. Strips `-perp`/`_perp` suffixes automatically |
-| `asset_id` | int | No | — | Direct asset ID (alternative to `coin`) |
-| `is_spot` | bool | No | — | `true` for spot orders, `false` for perp. **Must be explicit for place_order.** |
+| `coin` | string | **place_order, place_trigger_order, cancel_order, update_leverage** | — | Or use `asset_id`. Strips `-perp`/`_perp` suffixes automatically |
+| `asset_id` | string | No | — | Direct asset ID (numeric; alternative to `coin`) |
+| `is_spot` | `TEXT` | No | — | `true` for spot orders, `false` for perp. **Must be explicit for place_order.** |
 | `order_type` | `market` \| `limit` | No | `market` | — |
-| `is_buy` | bool | **place_order** | — | `true` or `false` |
+| `is_buy` | `TEXT` | **place_order, place_trigger_order** | — | `true` or `false` |
 | `size` | float | No | — | **Mutually exclusive with `usd_amount`**; coin units |
-| `usd_amount` | float | **spot_to_perp_transfer, perp_to_spot_transfer** | — | **Mutually exclusive with `size`** for orders; required for transfers |
-| `usd_amount_kind` | string | **when `usd_amount` is used** | — | `notional` or `margin` |
-| `leverage` | int | **when `usd_amount_kind=margin`; update_leverage** | — | Must be positive |
-| `price` | float | **limit orders** | — | Must be positive |
+| `usd_amount` | `TEXT` | **spot_to_perp_transfer, perp_to_spot_transfer** | — | **Orders:** mutually exclusive with `size`. **Transfers:** required. |
+| `usd_amount_kind` | string | **perp `usd_amount` orders** | — | Perp only: `notional` or `margin`. Spot treats `usd_amount` as notional. |
+| `leverage` | string | **when `usd_amount_kind=margin`; update_leverage** | — | Must be a positive integer |
+| `price` | float | **limit orders** | — | Must be positive (also used for limit trigger orders when `is_market_trigger=false`) |
+| `trigger_price` | float | **place_trigger_order** | — | Trigger price (must be positive) |
+| `tpsl` | string | **place_trigger_order** | — | `"tp"` (take-profit) or `"sl"` (stop-loss) |
+| `is_market_trigger` | flag | No | `true` | Trigger orders only; `--is_market_trigger` / `--no-is_market_trigger` |
 | `slippage` | float | No | `0.01` | Market orders only; 0–0.25 (25% cap) |
 | `reduce_only` | flag | No | `false` | `--reduce_only` / `--no-reduce_only` |
 | `cloid` | string | No | — | Client order ID |
-| `order_id` | int | **cancel_order** | — | Or use `cancel_cloid` |
+| `order_id` | string | **cancel_order** | — | Or use `cancel_cloid` |
 | `cancel_cloid` | string | No | — | Alternative to `order_id` for cancel |
 | `is_cross` | flag | No | `true` | `--is_cross` / `--no-is_cross` |
-| `amount_usdc` | float | **withdraw** | — | USDC amount for withdraw |
-| `builder_fee_tenths_bp` | int | No | — | Falls back to config default |
+| `amount_usdc` | float | **withdraw** | — | USDC amount for withdraw (transfers use `usd_amount`) |
+| `builder_fee_tenths_bp` | string | No | — | Falls back to config default (positive integer, tenths of a bp) |
 
 **Key validations for `place_order`:**
 - Exactly one of `size` or `usd_amount` (not both, not neither).
-- If `usd_amount` is used, `usd_amount_kind` is required.
+- For perp orders: if `usd_amount` is used, `usd_amount_kind` is required (`notional` or `margin`). Spot treats `usd_amount` as notional.
 - If `usd_amount_kind=margin`, then `leverage` is required.
 - Limit orders require `price` > 0.
 - After lot-size rounding, size must still be > 0.
 - Builder fee is mandatory (auto-configured; approval is auto-submitted if needed).
 
+**Boolean parameter syntax:**
+- `is_spot` and `is_buy` are passed as **values** (e.g. `--is_spot true`, `--is_buy false`) — they are not `--flag/--no-flag`.
+- Only options documented as `--foo / --no-foo` behave like boolean flags (e.g. `--reduce_only`, `--is_cross`).
+
 ```bash
 # Market buy
-poetry run wayfinder hyperliquid_execute --action place_order --wallet_label main --coin ETH --is_buy true --usd_amount 200 --usd_amount_kind margin --leverage 5
+poetry run wayfinder hyperliquid_execute --action place_order --wallet_label main --coin ETH --is_spot false --is_buy true --usd_amount 200 --usd_amount_kind margin --leverage 5
 
 # Spot buy
 poetry run wayfinder hyperliquid_execute --action place_order --wallet_label main --coin HYPE --is_spot true --is_buy true --usd_amount 20
 
 # Limit sell
-poetry run wayfinder hyperliquid_execute --action place_order --wallet_label main --coin ETH --is_buy false --size 0.1 --price 4000 --order_type limit
+poetry run wayfinder hyperliquid_execute --action place_order --wallet_label main --coin ETH --is_spot false --is_buy false --size 0.1 --price 4000 --order_type limit
 
 # Close position (reduce-only)
-poetry run wayfinder hyperliquid_execute --action place_order --wallet_label main --coin ETH --is_buy false --size 0.5 --reduce_only
+poetry run wayfinder hyperliquid_execute --action place_order --wallet_label main --coin ETH --is_spot false --is_buy false --size 0.5 --reduce_only
+
+# Stop-loss / take-profit (trigger order)
+poetry run wayfinder hyperliquid_execute --action place_trigger_order --wallet_label main --coin ETH --tpsl sl --is_buy false --trigger_price 2800 --size 0.5
 
 # Update leverage
 poetry run wayfinder hyperliquid_execute --action update_leverage --wallet_label main --coin ETH --leverage 5
@@ -452,14 +467,16 @@ Read-only access to Polymarket markets, prices, order books, and user status.
 | `keep_closed_markets` | bool | No | `false` | `search` |
 | `rerank` | bool | No | `true` | `search` |
 | `offset` | int | No | `0` | `trending` |
+| `events_status` | string | No | `"active"` | `search` only. One of `active`, `closed`, `archived` |
+| `end_date_min` | string | No | `YYYY-MM-DD` | `search` only. Min event end date (UTC) |
 | `market_slug` | string | **get_market** | — | Market slug |
 | `event_slug` | string | **get_event** | — | Event slug |
 | `token_id` | string | **price, order_book, price_history** | — | Polymarket CLOB token id (optional for `open_orders` filter) |
 | `side` | `BUY` \| `SELL` | No | `BUY` | `price` only |
 | `interval` | string | No | `"1d"` | `price_history` only |
-| `start_ts` | int | No | — | `price_history` only (unix seconds) |
-| `end_ts` | int | No | — | `price_history` only (unix seconds) |
-| `fidelity` | int | No | — | `price_history` only |
+| `start_ts` | `TEXT` | No | — | `price_history` only (unix seconds) |
+| `end_ts` | `TEXT` | No | — | `price_history` only (unix seconds) |
+| `fidelity` | `TEXT` | No | — | `price_history` only |
 
 **Action-specific requirements:**
 - `status`, `bridge_status`: require an `account` (via `--account`, `--wallet_address`, or `--wallet_label`).
@@ -488,9 +505,9 @@ Execute Polymarket actions (bridging and trading). **This command is live (no dr
 | `wallet_label` | string | **Yes** | — | Wallet must include `address` and `private_key_hex` in config |
 | `from_chain_id` | int | No | `137` | `bridge_deposit` only |
 | `from_token_address` | string | No | Polygon USDC | `bridge_deposit` only |
-| `amount` | float | **bridge_deposit** | — | Amount of USDC to deposit |
+| `amount` | `TEXT` | **bridge_deposit** | — | Amount of USDC to deposit |
 | `recipient_address` | string | No | sender | `bridge_deposit` only |
-| `amount_usdce` | float | **bridge_withdraw** | — | Amount of USDC.e to withdraw |
+| `amount_usdce` | `TEXT` | **bridge_withdraw** | — | Amount of USDC.e to withdraw |
 | `to_chain_id` | int | No | `137` | `bridge_withdraw` only |
 | `to_token_address` | string | No | Polygon USDC | `bridge_withdraw` only |
 | `recipient_addr` | string | No | sender | `bridge_withdraw` only |
@@ -498,11 +515,11 @@ Execute Polymarket actions (bridging and trading). **This command is live (no dr
 | `market_slug` | string | No | — | Used by `buy`, `sell`, `close_position` |
 | `outcome` | string \| int | No | `"YES"` | Used with `market_slug` (e.g. `YES`/`NO`) |
 | `token_id` | string | No | — | Alternative to `market_slug` for `buy`, `sell`, `place_limit_order` |
-| `amount_usdc` | float | **buy** | — | Buy amount in USDC |
-| `shares` | float | **sell** | — | Shares to sell |
+| `amount_usdc` | `TEXT` | **buy** | — | Buy amount in USDC |
+| `shares` | `TEXT` | **sell** | — | Shares to sell |
 | `side` | `BUY` \| `SELL` | No | `BUY` | `place_limit_order` only |
-| `price` | float | **place_limit_order** | — | Limit price (0–1) |
-| `size` | float | **place_limit_order** | — | Order size (shares) |
+| `price` | `TEXT` | **place_limit_order** | — | Limit price (0–1) |
+| `size` | `TEXT` | **place_limit_order** | — | Order size (shares) |
 | `post_only` | bool | No | `false` | `place_limit_order` only |
 | `order_id` | string | **cancel_order** | — | — |
 | `condition_id` | string | **redeem_positions** | — | Required for `redeem_positions`; also accepted by `close_position` as a fallback |
@@ -755,13 +772,18 @@ Config is loaded from `$WAYFINDER_CONFIG_PATH` (default: `$WAYFINDER_SDK_PATH/co
 | Adapter | Protocol | Capabilities |
 |---------|----------|-------------|
 | `aave_v3_adapter` | Aave V3 (multi-chain) | `market.list`, `position.read`, `lending.lend`, `lending.unlend`, `lending.borrow`, `lending.repay`, `collateral.toggle`, `rewards.claim` |
+| `avantis_adapter` | Avantis avUSDC vault (Base) | `market.list`, `position.read`, `vault.deposit`, `vault.withdraw` |
 | `balance_adapter` | EVM wallets | `balance.read`, `transfer.main_to_strategy`, `transfer.strategy_to_main`, `transfer.send` |
 | `boros_adapter` | Boros (Arbitrum) | `market.read`, `market.quote`, `position.open`, `position.close`, `collateral.deposit`, `collateral.withdraw` |
 | `brap_adapter` | Cross-chain swaps | `swap.quote`, `swap.execute`, `swap.compare_routes`, `bridge.quote`, `gas.estimate` |
 | `ccxt_adapter` | CEXes (Aster/Binance) | `exchange.factory` |
+| `euler_v2_adapter` | Euler v2 (EVK / eVaults) | `market.list`, `market.read`, `position.read`, `lending.lend`, `lending.unlend`, `lending.borrow`, `lending.repay`, `collateral.set`, `collateral.remove` |
+| `eigencloud_adapter` | EigenCloud (EigenLayer restaking) | `market.list`, `position.read`, `restaking.deposit`, `restaking.withdraw.queue`, `restaking.withdraw.complete`, `delegation.*`, `rewards.*` |
+| `ethena_vault_adapter` | Ethena sUSDe vault (Ethereum) | `vault.read`, `vault.deposit`, `vault.withdraw`, `position.read`, `market.apy` |
 | `hyperlend_adapter` | HyperLend (HyperEVM) | `market.stable_markets`, `market.assets_view`, `market.rate_history`, `lending.lend`, `lending.unlend` |
 | `hyperliquid_adapter` | Hyperliquid DEX | `market.read`, `market.meta`, `market.funding`, `market.candles`, `market.orderbook`, `order.execute`, `order.cancel`, `position.manage`, `transfer`, `withdraw` |
 | `ledger_adapter` | Local bookkeeping | `ledger.read`, `ledger.record`, `ledger.snapshot` |
+| `lido_adapter` | Lido liquid staking (Ethereum) | `staking.stake`, `staking.wrap`, `staking.unwrap`, `withdrawal.request`, `withdrawal.claim`, `position.read` |
 | `moonwell_adapter` | Moonwell (Base) | `lending.lend`, `lending.unlend`, `lending.borrow`, `lending.repay`, `collateral.set`, `collateral.remove`, `rewards.claim`, `position.read`, `market.apy`, `market.collateral_factor` |
 | `morpho_adapter` | Morpho Blue + MetaMorpho | `market.list`, `market.read`, `position.read`, `lending.lend`, `lending.unlend`, `lending.borrow`, `lending.repay`, `vault.list`, `vault.deposit`, `vault.withdraw`, `rewards.read`, `rewards.claim` |
 | `multicall_adapter` | EVM batch calls | `multicall.aggregate` |
@@ -876,7 +898,7 @@ poetry run wayfinder run_strategy --strategy stablecoin_yield_strategy --action 
 ```bash
 poetry run wayfinder resource wayfinder://hyperliquid/main/state
 poetry run wayfinder hyperliquid_execute --action update_leverage --wallet_label main --coin ETH --leverage 5
-poetry run wayfinder hyperliquid_execute --action place_order --wallet_label main --coin ETH --is_buy true --usd_amount 200 --usd_amount_kind margin --leverage 5
+poetry run wayfinder hyperliquid_execute --action place_order --wallet_label main --coin ETH --is_spot false --is_buy true --usd_amount 200 --usd_amount_kind margin --leverage 5
 ```
 
 ### Wind Down Everything
@@ -933,14 +955,11 @@ Before writing any script, **pull the detailed reference docs** for the adapter 
 
 # Check the pinned SDK version
 ./scripts/pull-sdk-ref.sh --version
-
-# Override with a specific commit
-./scripts/pull-sdk-ref.sh --commit abc123 moonwell
 ```
 
-**Available topics:** `strategies`, `setup`, `data`, `brap`, `aave`, `morpho`, `moonwell`, `hyperlend`, `pendle`, `boros`, `hyperliquid`, `polymarket`, `uniswap`, `projectx`, `simulation`, `promote`
+**Available topics:** `contracts`, `simulation`, `adapters`, `strategies`, `setup`, `brap`, `boros`, `ccxt`, `coding`, `hyperlend`, `hyperliquid`, `polymarket`, `moonwell`, `pendle`, `uniswap`, `projectx`, `aave`, `morpho`, `delta-lab`, `data`
 
-The SDK ref is tracked in `.sdk-version` (default: `main`). The pull script checks out that ref when reading docs, then restores the SDK to its previous state.
+The pinned SDK ref is tracked in `sdk-version.md` (a commit hash). `pull-sdk-ref.sh` reads docs from your local SDK checkout and **warns** if the SDK ref doesn’t match the pinned version.
 
 **Always run this before writing a script** — the docs cover critical details like:
 - Exact method signatures and required parameters
@@ -1003,6 +1022,7 @@ if __name__ == "__main__":
 - [references/adapters.md](references/adapters.md) — Adapter capabilities and method signatures
 - [references/coding-interface.md](references/coding-interface.md) — Custom Python scripting with adapters
 - [references/tokens-and-pools.md](references/tokens-and-pools.md) — Token IDs, supported chains, pool discovery, balance reads
+- [references/delta-lab.md](references/delta-lab.md) — Delta Lab screens + asset lookup (market data)
 - [references/simulation-dry-run.md](references/simulation-dry-run.md) — Fork-mode simulation (Gorlami) and dry-run patterns
 - [references/hyperliquid.md](references/hyperliquid.md) — Hyperliquid trading, deposits, funding
 - [references/polymarket.md](references/polymarket.md) — Polymarket markets, bridging, and trading
@@ -1010,11 +1030,16 @@ if __name__ == "__main__":
 - [references/moonwell.md](references/moonwell.md) — Moonwell lending, mToken addresses, gotchas
 - [references/aave-v3.md](references/aave-v3.md) — Aave V3 lending/borrowing (markets + positions + execution)
 - [references/morpho.md](references/morpho.md) — Morpho Blue + MetaMorpho (markets/vaults + rewards + execution)
+- [references/euler-v2.md](references/euler-v2.md) — Euler v2 vault markets (EVK/eVaults) + EVC-batched lend/borrow flows
+- [references/ethena-vault.md](references/ethena-vault.md) — Ethena USDe → sUSDe vault (APY + cooldown withdraw flow)
 - [references/pendle.md](references/pendle.md) — Pendle PT/YT markets, swap execution
 - [references/boros.md](references/boros.md) — Boros fixed-rate markets, rate locking
+- [references/lido.md](references/lido.md) — Lido staking (stETH/wstETH) + async withdrawals
 - [references/uniswap.md](references/uniswap.md) — Uniswap V3 LP positions and fee collection
 - [references/projectx.md](references/projectx.md) — ProjectX (V3 fork) LP positions, swaps, and strategy notes
 - [references/hyperlend.md](references/hyperlend.md) — HyperLend lending, supply/withdraw flows
+- [references/avantis.md](references/avantis.md) — Avantis avUSDC vault (deposit/withdraw)
+- [references/eigencloud.md](references/eigencloud.md) — EigenCloud restaking (deposit/delegation/withdrawals/rewards)
 
 ## Error Handling
 

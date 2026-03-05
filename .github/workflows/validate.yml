@@ -102,10 +102,10 @@ jobs:
           1. **Actual CLI help output** - Located in wayfinder-openclaw/cli-help-output/
              These are the actual --help outputs from the CLI commands.
 
-          2. **SKILL.md documentation** - Located at wayfinder-openclaw/wayfinder/SKILL.md
+          2. **SKILL.md documentation** - Located at wayfinder-openclaw/SKILL.md
              This is the skill documentation that describes CLI commands and their usage.
 
-          3. **skill.json definition** - Located at wayfinder-openclaw/wayfinder/skill.json
+          3. **skill.json definition** - Located at wayfinder-openclaw/skill.json
              This defines the command structure and parameters.
 
           4. **wayfinder-paths-sdk documentation** - Located in wayfinder-paths-sdk/

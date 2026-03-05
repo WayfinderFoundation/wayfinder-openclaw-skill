@@ -26,6 +26,7 @@
 #   projectx     ProjectX adapter (Uniswap V3 fork on HyperEVM)
 #   aave         Aave V3 adapter (multi-chain lending)
 #   morpho       Morpho adapter (Blue + MetaMorpho)
+#   delta-lab    Delta Lab screens + asset lookup (market data)
 #   data         Pool, token, and balance data (pool discovery, token metadata, ledger)
 
 set -euo pipefail
@@ -112,7 +113,7 @@ dir_for_topic() {
         brap) echo "using-brap-adapter" ;;
         boros) echo "using-boros-adapter" ;;
         ccxt) echo "using-ccxt-adapter" ;;
-        coding) echo "coding-interface" ;;
+        coding) echo "developing-wayfinder-strategies" ;;
         hyperlend) echo "using-hyperlend-adapter" ;;
         hyperliquid) echo "using-hyperliquid-adapter" ;;
         polymarket) echo "using-polymarket-adapter" ;;
@@ -122,6 +123,7 @@ dir_for_topic() {
         projectx) echo "using-projectx-adapter" ;;
         aave) echo "using-aave-v3-adapter" ;;
         morpho) echo "using-morpho-adapter" ;;
+        delta-lab|delta_lab|delta) echo "using-delta-lab" ;;
         data) echo "using-pool-token-balance-data" ;;
         *) echo "" ;;
     esac
@@ -200,6 +202,7 @@ show_list() {
     echo "  projectx     ProjectX adapter (Uniswap V3 fork on HyperEVM)"
     echo "  aave         Aave V3 adapter (multi-chain lending)"
     echo "  morpho       Morpho adapter (Blue + MetaMorpho)"
+    echo "  delta-lab    Delta Lab screens + asset lookup (market data)"
     echo "  data         Pool, token, and balance data (pool discovery, token metadata, ledger)"
     echo ""
     echo "Usage:"
@@ -215,7 +218,7 @@ show_list() {
 }
 
 show_all() {
-    for topic in contracts simulation adapters strategies setup brap boros ccxt coding hyperlend hyperliquid polymarket moonwell pendle uniswap projectx aave morpho data; do
+    for topic in contracts simulation adapters strategies setup brap boros ccxt coding hyperlend hyperliquid polymarket moonwell pendle uniswap projectx aave morpho delta-lab data; do
         show_topic "$topic"
     done
 }

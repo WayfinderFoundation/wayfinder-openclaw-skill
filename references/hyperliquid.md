@@ -170,11 +170,11 @@ If you need strict "arrived on Arbitrum" confirmation, add an Arbitrum-side rece
 ```bash
 # Market buy
 poetry run wayfinder hyperliquid_execute --action place_order --wallet_label main \
-  --coin ETH --is_buy true --usd_amount 200 --usd_amount_kind margin --leverage 5
+  --coin ETH --is_spot false --is_buy true --usd_amount 200 --usd_amount_kind margin --leverage 5
 
 # Market sell / short
 poetry run wayfinder hyperliquid_execute --action place_order --wallet_label main \
-  --coin ETH --is_buy false --usd_amount 200 --usd_amount_kind margin --leverage 5
+  --coin ETH --is_spot false --is_buy false --usd_amount 200 --usd_amount_kind margin --leverage 5
 ```
 
 ### Limit Orders
@@ -182,11 +182,11 @@ poetry run wayfinder hyperliquid_execute --action place_order --wallet_label mai
 ```bash
 # Limit buy
 poetry run wayfinder hyperliquid_execute --action place_order --wallet_label main \
-  --coin ETH --is_buy true --size 0.1 --price 3000 --order_type limit
+  --coin ETH --is_spot false --is_buy true --size 0.1 --price 3000 --order_type limit
 
 # Limit sell
 poetry run wayfinder hyperliquid_execute --action place_order --wallet_label main \
-  --coin ETH --is_buy false --size 0.1 --price 4000 --order_type limit
+  --coin ETH --is_spot false --is_buy false --size 0.1 --price 4000 --order_type limit
 ```
 
 ### Close Position
@@ -194,7 +194,7 @@ poetry run wayfinder hyperliquid_execute --action place_order --wallet_label mai
 ```bash
 # Close with reduce-only
 poetry run wayfinder hyperliquid_execute --action place_order --wallet_label main \
-  --coin ETH --is_buy false --size 0.5 --reduce_only
+  --coin ETH --is_spot false --is_buy false --size 0.5 --reduce_only
 ```
 
 ### Leverage
@@ -242,6 +242,18 @@ ok, result = await adapter.place_trigger_order(
 
 Trigger orders are always `reduce_only=True`. The convenience wrapper `place_stop_loss()` calls `place_trigger_order` with `tpsl="sl"` and `is_market=True`.
 
+Bash shortcut:
+
+```bash
+# Stop-loss on a long ETH position: sell 0.5 ETH if price hits 2800
+poetry run wayfinder hyperliquid_execute --action place_trigger_order --wallet_label main \
+  --coin ETH --tpsl sl --is_buy false --trigger_price 2800 --size 0.5
+
+# Limit stop-loss (trigger at 2800, fill at 2790)
+poetry run wayfinder hyperliquid_execute --action place_trigger_order --wallet_label main \
+  --coin ETH --tpsl sl --is_buy false --trigger_price 2800 --size 0.5 --no-is_market_trigger --price 2790
+```
+
 ### Isolated Margin Management
 
 Add or remove USDC margin on an existing isolated position:
@@ -276,10 +288,10 @@ USDC transfers between spot and perp wallets are available via `hyperliquid_exec
 
 ```bash
 # Move USDC from spot wallet to perp wallet
-poetry run wayfinder hyperliquid_execute --action spot_to_perp_transfer --wallet_label main --amount_usdc 50
+poetry run wayfinder hyperliquid_execute --action spot_to_perp_transfer --wallet_label main --usd_amount 50
 
 # Move USDC from perp wallet to spot wallet
-poetry run wayfinder hyperliquid_execute --action perp_to_spot_transfer --wallet_label main --amount_usdc 50
+poetry run wayfinder hyperliquid_execute --action perp_to_spot_transfer --wallet_label main --usd_amount 50
 ```
 
 ### HyperCore → HyperEVM Transfers (via scripts)
