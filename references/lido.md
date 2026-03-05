@@ -20,9 +20,9 @@ Lido staking/withdrawals are **Ethereum mainnet** (`chain_id = 1`).
 | Method | Purpose | Wallet needed? |
 |--------|---------|----------------|
 | `get_rates(chain_id=1)` | stETH↔wstETH rate data | No |
-| `get_withdrawal_requests(chain_id=1, account)` | User withdrawal requests | No |
-| `get_withdrawal_status(chain_id=1, request_ids)` | Status of request IDs | No |
-| `get_full_user_state(chain_id=1, account, include_zero_positions=False)` | Balances + withdrawal queue snapshot | No |
+| `get_withdrawal_requests(account, chain_id=1)` | User withdrawal requests | No |
+| `get_withdrawal_status(request_ids, chain_id=1)` | Status of request IDs | No |
+| `get_full_user_state(account, chain_id=1, include_withdrawals=True, include_claimable=False, include_usd=False)` | Balances + withdrawal queue snapshot | No |
 
 ### Script example: user snapshot
 
@@ -49,14 +49,14 @@ if __name__ == "__main__":
 
 | Method | Purpose | Notes |
 |--------|---------|-------|
-| `stake_eth(amount_wei, receiver=None, wrap_to_wsteth=False)` | Stake ETH → stETH (or wstETH) | Sends ETH value |
-| `wrap_steth(amount_steth_wei, receiver=None)` | stETH → wstETH | Requires stETH approval |
-| `unwrap_wsteth(amount_wsteth_wei, receiver=None)` | wstETH → stETH | — |
-| `request_withdrawal(amount, is_wsteth=False, receiver=None)` | Request async withdrawal | Produces request IDs |
-| `claim_withdrawals(request_ids, receiver=None)` | Claim finalized withdrawals | Adapter finds required hints |
+| `stake_eth(amount_wei, chain_id=1, referral=ZERO_ADDRESS, receive="stETH"|"wstETH", check_limits=True)` | Stake ETH → stETH (or wstETH) | `receive="wstETH"` does submit + wrap (2 tx) |
+| `wrap_steth(amount_steth_wei, chain_id=1)` | stETH → wstETH | Requires stETH approval |
+| `unwrap_wsteth(amount_wsteth_wei, chain_id=1)` | wstETH → stETH | — |
+| `request_withdrawal(asset="stETH"|"wstETH", amount_wei, owner=None, chain_id=1)` | Request async withdrawal | Mints an `unstETH` NFT; adapter splits large amounts |
+| `claim_withdrawals(request_ids, recipient=None, chain_id=1)` | Claim finalized withdrawals | Adapter finds required checkpoint hints |
 
 ## Gotchas
 
 - Withdrawals are **async**: a request can take time to finalize before it is claimable.
-- Requests/claims are sensitive to exact token (stETH vs wstETH); be explicit about `is_wsteth`.
-- Amounts are raw ints (wei).
+- Requests/claims are sensitive to exact token (stETH vs wstETH); be explicit about `asset`.
+- Amounts are raw ints (wei), and withdrawals are chunked to satisfy WithdrawalQueue constraints.

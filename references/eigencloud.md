@@ -19,7 +19,7 @@ The EigenCloud adapter supports:
 
 ## Supported chains
 
-EigenCloud execution is **Ethereum mainnet only** (`chain_id = 1`).
+EigenCloud adapter is **Ethereum mainnet only** (it does not take a `chain_id` parameter).
 
 ## High-value reads
 
@@ -28,8 +28,10 @@ Primary adapter: `wayfinder_paths/adapters/eigencloud_adapter/adapter.py`
 | Method | Purpose | Wallet needed? |
 |--------|---------|----------------|
 | `get_all_markets(include_total_shares=True, include_share_to_underlying=True)` | Strategy list + underlying metadata | No |
-| `get_delegation_state(account)` | Current delegation + operator | No |
-| `get_full_user_state(account, include_rewards=True, include_usd=True, include_zero_positions=False)` | Aggregated snapshot: deposits, delegation, withdrawals, optional rewards | No |
+| `get_delegation_state(account=None)` | Current delegation + operator | No |
+| `get_pos(account=None, include_usd=False)` | Deposited/withdrawable shares by strategy | No |
+| `get_rewards_metadata(account=None)` | Current distribution root + claimer | No |
+| `get_full_user_state(account, include_usd=False, include_queued_withdrawals=True, withdrawal_roots=None, include_rewards_metadata=True)` | Aggregated snapshot (you supply withdrawal roots) | No |
 
 ### Script example: list strategies
 
@@ -61,12 +63,14 @@ Key execution methods:
 | Method | Purpose | Notes |
 |--------|---------|-------|
 | `deposit(strategy, amount, token=None, check_whitelist=True)` | Deposit/restake into a strategy | Approves `StrategyManager` first if needed |
-| `delegate(operator)` | Delegate to an operator | Optional; can be changed |
-| `undelegate()` | Undelegate | Starts exit path depending on position |
-| `redelegate(new_operator)` | Change delegation | Convenience wrapper |
-| `queue_withdrawals(strategies, shares, withdrawer=None)` | Queue withdrawals | Withdrawals are delayed (queue + completion) |
-| `complete_withdrawal(withdrawal, tokens, middleware_times_index=0, receive_as_tokens=True)` | Complete a queued withdrawal | Requires the queued withdrawal struct + token list |
-| `claim_rewards(claim, require_metadata=True)` | Claim rewards | Claim structs are offchain-prepared |
+| `delegate(operator, approver_signature=b"", approver_expiry=0, approver_salt=None)` | Delegate to an operator | Some operators require approver signatures |
+| `undelegate(staker=None, include_withdrawal_roots=True)` | Undelegate | Can return `withdrawal_roots` extracted from tx logs |
+| `redelegate(new_operator, approver_signature=b"", approver_expiry=0, approver_salt=None, include_withdrawal_roots=True)` | Change delegation | Can return `withdrawal_roots` extracted from tx logs |
+| `queue_withdrawals(strategies, deposit_shares, include_withdrawal_roots=True)` | Queue withdrawals | Withdrawals are delayed (queue + completion) |
+| `complete_withdrawal(withdrawal_root, receive_as_tokens=True, tokens_override=None)` | Complete a queued withdrawal | Adapter can resolve the token list; `tokens_override` rarely needed |
+| `claim_rewards(claim, recipient)` | Claim rewards | Claim structs are offchain-prepared |
+| `claim_rewards_batch(claims, recipient)` | Claim rewards (batch) | Claim structs are offchain-prepared |
+| `claim_rewards_calldata(calldata, value=0)` | Claim rewards (raw calldata fallback) | Use calldata from EigenLayer app/CLI/indexer |
 
 ## Gotchas
 
