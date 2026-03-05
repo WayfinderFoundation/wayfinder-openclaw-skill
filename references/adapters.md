@@ -121,6 +121,17 @@ Market discovery + position reads for Morpho Blue, MetaMorpho vault discovery, r
 
 See [morpho.md](morpho.md) for details.
 
+### Euler v2 Adapter (`euler_v2_adapter`)
+
+- **Type**: `EULER_V2`
+- **Module**: `wayfinder_paths.adapters.euler_v2_adapter.adapter.EulerV2Adapter`
+- **Protocol**: Euler v2 (EVK / eVaults)
+- **Capabilities**: `market.list`, `market.read`, `position.read`, `lending.lend`, `lending.unlend`, `lending.borrow`, `lending.repay`, `collateral.set`, `collateral.remove`
+
+Euler v2 markets are vaults (the vault address is also the ERC-4626 share token). Execution uses EVC batching.
+
+See [euler-v2.md](euler-v2.md) for details.
+
 ### Avantis Adapter (`avantis_adapter`)
 
 - **Type**: `AVANTIS`
@@ -131,6 +142,39 @@ See [morpho.md](morpho.md) for details.
 ERC-4626 vault integration for depositing USDC into the Avantis avUSDC vault (Base) and redeeming shares back to USDC.
 
 See [avantis.md](avantis.md) for details.
+
+### Ethena Vault Adapter (`ethena_vault_adapter`)
+
+- **Type**: `ETHENA`
+- **Module**: `wayfinder_paths.adapters.ethena_vault_adapter.adapter.EthenaVaultAdapter`
+- **Protocol**: Ethena sUSDe vault (Ethereum mainnet)
+- **Capabilities**: `vault.read`, `vault.deposit`, `vault.withdraw`, `position.read`, `market.apy`, `lending.lend`, `lending.unlend`
+
+Stake USDe into the canonical sUSDe vault and withdraw via cooldown → claim.
+
+See [ethena-vault.md](ethena-vault.md) for details.
+
+### Lido Adapter (`lido_adapter`)
+
+- **Type**: `LIDO`
+- **Module**: `wayfinder_paths.adapters.lido_adapter.adapter.LidoAdapter`
+- **Protocol**: Lido liquid staking (stETH / wstETH) + WithdrawalQueue
+- **Capabilities**: `staking.stake`, `staking.wrap`, `staking.unwrap`, `withdrawal.request`, `withdrawal.claim`, `position.read`
+
+Stake ETH → stETH, wrap/unwrap, and manage async withdrawal requests/claims.
+
+See [lido.md](lido.md) for details.
+
+### EigenCloud Adapter (`eigencloud_adapter`)
+
+- **Type**: `EIGENCLOUD`
+- **Module**: `wayfinder_paths.adapters.eigencloud_adapter.adapter.EigenCloudAdapter`
+- **Protocol**: EigenCloud (EigenLayer restaking) on Ethereum mainnet
+- **Capabilities**: `market.list`, `position.read`, `restaking.deposit`, `restaking.withdraw.queue`, `restaking.withdraw.complete`, `delegation.delegate`, `delegation.undelegate`, `delegation.redelegate`, `rewards.read`, `rewards.claim`
+
+Restaking + delegation + queued withdrawals + rewards claiming (claim structs are offchain-prepared).
+
+See [eigencloud.md](eigencloud.md) for details.
 
 ### Hyperliquid Adapter (`hyperliquid_adapter`)
 

@@ -764,13 +764,18 @@ Config is loaded from `$WAYFINDER_CONFIG_PATH` (default: `$WAYFINDER_SDK_PATH/co
 | Adapter | Protocol | Capabilities |
 |---------|----------|-------------|
 | `aave_v3_adapter` | Aave V3 (multi-chain) | `market.list`, `position.read`, `lending.lend`, `lending.unlend`, `lending.borrow`, `lending.repay`, `collateral.toggle`, `rewards.claim` |
+| `avantis_adapter` | Avantis avUSDC vault (Base) | `market.list`, `position.read`, `vault.deposit`, `vault.withdraw` |
 | `balance_adapter` | EVM wallets | `balance.read`, `transfer.main_to_strategy`, `transfer.strategy_to_main`, `transfer.send` |
 | `boros_adapter` | Boros (Arbitrum) | `market.read`, `market.quote`, `position.open`, `position.close`, `collateral.deposit`, `collateral.withdraw` |
 | `brap_adapter` | Cross-chain swaps | `swap.quote`, `swap.execute`, `swap.compare_routes`, `bridge.quote`, `gas.estimate` |
 | `ccxt_adapter` | CEXes (Aster/Binance) | `exchange.factory` |
+| `euler_v2_adapter` | Euler v2 (EVK / eVaults) | `market.list`, `market.read`, `position.read`, `lending.lend`, `lending.unlend`, `lending.borrow`, `lending.repay`, `collateral.set`, `collateral.remove` |
+| `eigencloud_adapter` | EigenCloud (EigenLayer restaking) | `market.list`, `position.read`, `restaking.deposit`, `restaking.withdraw.queue`, `restaking.withdraw.complete`, `delegation.*`, `rewards.*` |
+| `ethena_vault_adapter` | Ethena sUSDe vault (Ethereum) | `vault.read`, `vault.deposit`, `vault.withdraw`, `position.read`, `market.apy` |
 | `hyperlend_adapter` | HyperLend (HyperEVM) | `market.stable_markets`, `market.assets_view`, `market.rate_history`, `lending.lend`, `lending.unlend` |
 | `hyperliquid_adapter` | Hyperliquid DEX | `market.read`, `market.meta`, `market.funding`, `market.candles`, `market.orderbook`, `order.execute`, `order.cancel`, `position.manage`, `transfer`, `withdraw` |
 | `ledger_adapter` | Local bookkeeping | `ledger.read`, `ledger.record`, `ledger.snapshot` |
+| `lido_adapter` | Lido liquid staking (Ethereum) | `staking.stake`, `staking.wrap`, `staking.unwrap`, `withdrawal.request`, `withdrawal.claim`, `position.read` |
 | `moonwell_adapter` | Moonwell (Base) | `lending.lend`, `lending.unlend`, `lending.borrow`, `lending.repay`, `collateral.set`, `collateral.remove`, `rewards.claim`, `position.read`, `market.apy`, `market.collateral_factor` |
 | `morpho_adapter` | Morpho Blue + MetaMorpho | `market.list`, `market.read`, `position.read`, `lending.lend`, `lending.unlend`, `lending.borrow`, `lending.repay`, `vault.list`, `vault.deposit`, `vault.withdraw`, `rewards.read`, `rewards.claim` |
 | `multicall_adapter` | EVM batch calls | `multicall.aggregate` |
@@ -1020,11 +1025,16 @@ if __name__ == "__main__":
 - [references/moonwell.md](references/moonwell.md) — Moonwell lending, mToken addresses, gotchas
 - [references/aave-v3.md](references/aave-v3.md) — Aave V3 lending/borrowing (markets + positions + execution)
 - [references/morpho.md](references/morpho.md) — Morpho Blue + MetaMorpho (markets/vaults + rewards + execution)
+- [references/euler-v2.md](references/euler-v2.md) — Euler v2 vault markets (EVK/eVaults) + EVC-batched lend/borrow flows
+- [references/ethena-vault.md](references/ethena-vault.md) — Ethena USDe → sUSDe vault (APY + cooldown withdraw flow)
 - [references/pendle.md](references/pendle.md) — Pendle PT/YT markets, swap execution
 - [references/boros.md](references/boros.md) — Boros fixed-rate markets, rate locking
+- [references/lido.md](references/lido.md) — Lido staking (stETH/wstETH) + async withdrawals
 - [references/uniswap.md](references/uniswap.md) — Uniswap V3 LP positions and fee collection
 - [references/projectx.md](references/projectx.md) — ProjectX (V3 fork) LP positions, swaps, and strategy notes
 - [references/hyperlend.md](references/hyperlend.md) — HyperLend lending, supply/withdraw flows
+- [references/avantis.md](references/avantis.md) — Avantis avUSDC vault (deposit/withdraw)
+- [references/eigencloud.md](references/eigencloud.md) — EigenCloud restaking (deposit/delegation/withdrawals/rewards)
 
 ## Error Handling
 
