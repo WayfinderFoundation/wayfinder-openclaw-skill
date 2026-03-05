@@ -113,7 +113,7 @@ dir_for_topic() {
         brap) echo "using-brap-adapter" ;;
         boros) echo "using-boros-adapter" ;;
         ccxt) echo "using-ccxt-adapter" ;;
-        coding) echo "coding-interface" ;;
+        coding) echo "developing-wayfinder-strategies" ;;
         hyperlend) echo "using-hyperlend-adapter" ;;
         hyperliquid) echo "using-hyperliquid-adapter" ;;
         polymarket) echo "using-polymarket-adapter" ;;
