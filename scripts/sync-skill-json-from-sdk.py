@@ -83,7 +83,7 @@ def _parse_server_py(server_py: str) -> tuple[list[str], list[str]]:
     tool_names = re.findall(r"mcp\.tool\(\)\((\w+)\)", server_py)
 
     # Resources are registered like: mcp.resource("wayfinder://adapters")(list_adapters)
-    resource_uris = re.findall(r'mcp\.resource\("([^"]+)"\)', server_py)
+    resource_uris = re.findall(r'mcp\.resource\(\s*"([^"]+)"\s*\)', server_py)
 
     return tool_names, resource_uris
 
