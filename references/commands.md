@@ -254,11 +254,11 @@ Place/cancel orders, update leverage, withdraw USDC, and transfer USDC between s
 | `wallet_label` | string | **Yes** | — | Must resolve to wallet with private key |
 | `coin` | string | **place_order, place_trigger_order, cancel_order, update_leverage** | — | Or use `asset_id`. Strips `-perp`/`_perp` suffixes automatically |
 | `asset_id` | string | No | — | Direct asset ID (numeric; alternative to `coin`) |
-| `is_spot` | bool | No | — | `true` for spot orders, `false` for perp. **Must be explicit for place_order.** |
+| `is_spot` | `TEXT` | No | — | `true` for spot orders, `false` for perp. **Must be explicit for place_order.** |
 | `order_type` | `market` \| `limit` | No | `market` | — |
-| `is_buy` | bool | **place_order, place_trigger_order** | — | `true` or `false` |
+| `is_buy` | `TEXT` | **place_order, place_trigger_order** | — | `true` or `false` |
 | `size` | float | No | — | **Mutually exclusive with `usd_amount`**; coin units |
-| `usd_amount` | float | No | — | **Orders:** mutually exclusive with `size`. **Transfers:** required. |
+| `usd_amount` | `TEXT` | No | — | **Orders:** mutually exclusive with `size`. **Transfers:** required. |
 | `usd_amount_kind` | string | **perp `usd_amount` orders** | — | Perp only: `notional` or `margin`. Spot treats `usd_amount` as notional. |
 | `leverage` | string | **when `usd_amount_kind=margin`; update_leverage** | — | Must be a positive integer |
 | `price` | float | **limit orders** | — | Must be positive (also used for limit trigger orders when `is_market_trigger=false`) |
@@ -281,6 +281,10 @@ Place/cancel orders, update leverage, withdraw USDC, and transfer USDC between s
 - Limit orders require `price` > 0.
 - After lot-size rounding, size must still be > 0.
 - Builder fee is mandatory (auto-configured; approval is auto-submitted if needed).
+
+**Boolean parameter syntax:**
+- `is_spot` and `is_buy` are passed as **values** (e.g. `--is_spot true`, `--is_buy false`) — they are not `--flag/--no-flag`.
+- Only options documented as `--foo / --no-foo` behave like boolean flags (e.g. `--reduce_only`, `--is_cross`).
 
 ```bash
 # Market buy
@@ -346,9 +350,9 @@ Read-only access to Polymarket markets, prices, order books, and user status.
 | `token_id` | string | **price, order_book, price_history** | — | Polymarket CLOB token id (optional for `open_orders` filter) |
 | `side` | `BUY` \| `SELL` | No | `BUY` | `price` only |
 | `interval` | string | No | `"1d"` | `price_history` only |
-| `start_ts` | int | No | — | `price_history` only (unix seconds) |
-| `end_ts` | int | No | — | `price_history` only (unix seconds) |
-| `fidelity` | int | No | — | `price_history` only |
+| `start_ts` | `TEXT` | No | — | `price_history` only (unix seconds) |
+| `end_ts` | `TEXT` | No | — | `price_history` only (unix seconds) |
+| `fidelity` | `TEXT` | No | — | `price_history` only |
 
 **Action-specific requirements:**
 - `status`, `bridge_status`: require an `account` (via `--account`, `--wallet_address`, or `--wallet_label`).
@@ -377,9 +381,9 @@ Execute Polymarket actions (bridging and trading). **This command is live (no dr
 | `wallet_label` | string | **Yes** | — | Wallet must include `address` and `private_key_hex` in config |
 | `from_chain_id` | int | No | `137` | `bridge_deposit` only |
 | `from_token_address` | string | No | Polygon USDC | `bridge_deposit` only |
-| `amount` | float | **bridge_deposit** | — | Amount of USDC to deposit |
+| `amount` | `TEXT` | **bridge_deposit** | — | Amount of USDC to deposit |
 | `recipient_address` | string | No | sender | `bridge_deposit` only |
-| `amount_usdce` | float | **bridge_withdraw** | — | Amount of USDC.e to withdraw |
+| `amount_usdce` | `TEXT` | **bridge_withdraw** | — | Amount of USDC.e to withdraw |
 | `to_chain_id` | int | No | `137` | `bridge_withdraw` only |
 | `to_token_address` | string | No | Polygon USDC | `bridge_withdraw` only |
 | `recipient_addr` | string | No | sender | `bridge_withdraw` only |
@@ -387,11 +391,11 @@ Execute Polymarket actions (bridging and trading). **This command is live (no dr
 | `market_slug` | string | No | — | Used by `buy`, `sell`, `close_position` |
 | `outcome` | string \| int | No | `"YES"` | Used with `market_slug` (e.g. `YES`/`NO`) |
 | `token_id` | string | No | — | Alternative to `market_slug` for `buy`, `sell`, `place_limit_order` |
-| `amount_usdc` | float | **buy** | — | Buy amount in USDC |
-| `shares` | float | **sell** | — | Shares to sell |
+| `amount_usdc` | `TEXT` | **buy** | — | Buy amount in USDC |
+| `shares` | `TEXT` | **sell** | — | Shares to sell |
 | `side` | `BUY` \| `SELL` | No | `BUY` | `place_limit_order` only |
-| `price` | float | **place_limit_order** | — | Limit price (0–1) |
-| `size` | float | **place_limit_order** | — | Order size (shares) |
+| `price` | `TEXT` | **place_limit_order** | — | Limit price (0–1) |
+| `size` | `TEXT` | **place_limit_order** | — | Order size (shares) |
 | `post_only` | bool | No | `false` | `place_limit_order` only |
 | `order_id` | string | **cancel_order** | — | — |
 | `condition_id` | string | **redeem_positions** | — | Required for `redeem_positions`; also accepted by `close_position` as a fallback |
