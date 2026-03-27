@@ -3,7 +3,7 @@
   "version": "0.9.0",
   "description": "DeFi trading, yield strategies, and portfolio management via the Wayfinder Paths CLI (`poetry run wayfinder`).",
   "sdk_version": "2d5318c8b90e9a99198bf0c61138aa99acc9ad07",
-  "entry": "wayfinder/SKILL.md",
+  "entry": "skills/wayfinder/SKILL.md",
   "commands": [
     "resource",
     "quote_swap",
@@ -67,107 +67,107 @@
   "skills": [
     {
       "name": "wayfinder",
-      "entry": "wayfinder/SKILL.md",
+      "entry": "skills/wayfinder/SKILL.md",
       "description": "DeFi trading, yield strategies, and portfolio management via the Wayfinder Paths CLI. Swap tokens, bridge assets cross-chain, send crypto, check wallet balances, look up token prices, manage wallets, and discover portfolio positions. Use for: exchange tokens, convert between chains, transfer funds, check how much I have, find token addresses, get swap quotes, on-chain execution, DeFi, crypto trading.",
       "references": [
-        "wayfinder/references/commands.md",
-        "wayfinder/references/tokens-and-pools.md",
-        "wayfinder/references/delta-lab.md",
-        "wayfinder/references/errors.md",
-        "wayfinder/references/setup.md",
-        "wayfinder/references/simulation-dry-run.md"
+        "skills/wayfinder/references/commands.md",
+        "skills/wayfinder/references/tokens-and-pools.md",
+        "skills/wayfinder/references/delta-lab.md",
+        "skills/wayfinder/references/errors.md",
+        "skills/wayfinder/references/setup.md",
+        "skills/wayfinder/references/simulation-dry-run.md"
       ]
     },
     {
       "name": "wayfinder-hyperliquid",
-      "entry": "hyperliquid/SKILL.md",
+      "entry": "skills/hyperliquid/SKILL.md",
       "description": "Trade perpetual futures and spot on Hyperliquid — long, short, leverage, margin, limit orders, market orders, stop-loss, take-profit, trigger orders, cancel orders, deposit USDC, withdraw, check open positions, PnL, funding rates, order book, transfer between spot and perp wallets. Use for: perps, futures trading, leveraged positions, derivatives.",
       "references": [
-        "hyperliquid/references/hyperliquid.md",
-        "hyperliquid/references/errors.md"
+        "skills/hyperliquid/references/hyperliquid.md",
+        "skills/hyperliquid/references/errors.md"
       ]
     },
     {
       "name": "wayfinder-polymarket",
-      "entry": "polymarket/SKILL.md",
+      "entry": "skills/polymarket/SKILL.md",
       "description": "Trade prediction markets on Polymarket — search events, browse trending markets, buy and sell outcome shares (YES/NO), place limit orders, check positions and P&L, bridge USDC collateral, view order books and price history. Use for: betting, predictions, elections, sports, event outcomes, will X happen, probability markets.",
       "references": [
-        "polymarket/references/polymarket.md",
-        "polymarket/references/errors.md"
+        "skills/polymarket/references/polymarket.md",
+        "skills/polymarket/references/errors.md"
       ]
     },
     {
       "name": "wayfinder-coding-interface",
-      "entry": "coding-interface/SKILL.md",
+      "entry": "skills/coding-interface/SKILL.md",
       "description": "Write and run custom Python scripts using Wayfinder SDK adapters — multi-step DeFi flows, batched operations, conditional logic, protocol combinations, custom calculations, rebalancing, automated workflows. Use for: write a script, automate, custom code, multi-step flow, programmatic access, get_adapter, run_script, complex operations that go beyond a single CLI command.",
       "references": [
-        "coding-interface/references/coding-interface.md",
-        "coding-interface/references/adapters.md",
-        "coding-interface/references/errors.md"
+        "skills/coding-interface/references/coding-interface.md",
+        "skills/coding-interface/references/adapters.md",
+        "skills/coding-interface/references/errors.md"
       ]
     },
     {
       "name": "wayfinder-contracts",
-      "entry": "contracts/SKILL.md",
+      "entry": "skills/contracts/SKILL.md",
       "description": "Compile, deploy, and interact with Solidity smart contracts — write .sol files, compile with OpenZeppelin, deploy to any EVM chain, fetch ABI from Etherscan, read contract state (eth_call), execute write transactions, verify on Etherscan. Use for: smart contract, deploy token, ERC20, ERC721, NFT, Solidity, contract call, contract interaction, on-chain code.",
       "references": [
-        "contracts/references/contracts.md",
-        "contracts/references/errors.md"
+        "skills/contracts/references/contracts.md",
+        "skills/contracts/references/errors.md"
       ]
     },
     {
       "name": "wayfinder-strategies",
-      "entry": "strategies/SKILL.md",
+      "entry": "skills/strategies/SKILL.md",
       "description": "Manage automated DeFi yield strategies — deposit, withdraw, exit, check status, analyze returns, run updates. Strategies include basis trading (delta-neutral funding), HYPE yield (Boros fixed-rate), stablecoin yield rotation, leveraged wstETH loop (Moonwell), multi-vault split, and concentrated LP (ProjectX). Use for: earn yield, passive income, auto-compound, strategy status, deploy capital, manage strategy, APY, farming, vault.",
       "references": [
-        "strategies/references/strategies.md",
-        "strategies/references/errors.md"
+        "skills/strategies/references/strategies.md",
+        "skills/strategies/references/errors.md"
       ]
     },
     {
       "name": "wayfinder-aave",
-      "entry": "aave/SKILL.md",
+      "entry": "skills/aave/SKILL.md",
       "description": "Lend and borrow on Aave V3 — supply collateral, borrow assets, repay loans, manage collateral flags, claim rewards, check health factor, view market rates and user positions. Multi-chain: Ethereum, Base, Arbitrum, Optimism, Polygon. Use for: Aave, supply, borrow, collateral, health factor, liquidation risk, interest rates, flash loans, lending protocol.",
       "references": [
-        "aave/references/aave-v3.md",
-        "aave/references/errors.md"
+        "skills/aave/references/aave-v3.md",
+        "skills/aave/references/errors.md"
       ]
     },
     {
       "name": "wayfinder-lido",
-      "entry": "lido/SKILL.md",
+      "entry": "skills/lido/SKILL.md",
       "description": "Stake ETH with Lido for liquid staking rewards — stake ETH to receive stETH, wrap stETH to wstETH, unwrap back, request and claim withdrawals, check conversion rates and positions. Use for: stake Ethereum, staking rewards, stETH, wstETH, liquid staking, ETH yield, unstake, Lido withdrawal.",
       "references": [
-        "lido/references/lido.md",
-        "lido/references/errors.md"
+        "skills/lido/references/lido.md",
+        "skills/lido/references/errors.md"
       ]
     },
     {
       "name": "wayfinder-lending-protocols",
-      "entry": "lending-protocols/SKILL.md",
+      "entry": "skills/lending-protocols/SKILL.md",
       "description": "Lend, borrow, and earn interest on DeFi lending protocols — Moonwell (Base), Morpho Blue and MetaMorpho vaults, Euler V2 eVaults, HyperLend (HyperEVM), Ethena sUSDe staking vault, SparkLend (MakerDAO). Supply assets, borrow against collateral, repay debt, claim rewards, check APY and positions. Use for: lending, borrowing, supply, interest rate, collateral, health factor, yield, deposit USDC, earn on stablecoins, DeFi money markets.",
       "references": [
-        "lending-protocols/references/moonwell.md",
-        "lending-protocols/references/morpho.md",
-        "lending-protocols/references/euler-v2.md",
-        "lending-protocols/references/hyperlend.md",
-        "lending-protocols/references/ethena-vault.md",
-        "lending-protocols/references/errors.md"
+        "skills/lending-protocols/references/moonwell.md",
+        "skills/lending-protocols/references/morpho.md",
+        "skills/lending-protocols/references/euler-v2.md",
+        "skills/lending-protocols/references/hyperlend.md",
+        "skills/lending-protocols/references/ethena-vault.md",
+        "skills/lending-protocols/references/errors.md"
       ]
     },
     {
       "name": "wayfinder-other-protocols",
-      "entry": "other-protocols/SKILL.md",
+      "entry": "skills/other-protocols/SKILL.md",
       "description": "Additional DeFi protocols — Boros fixed-rate interest markets, Pendle yield tokenization (PT/YT), Uniswap V3 concentrated liquidity LP, ProjectX LP on HyperEVM, Aerodrome and Slipstream DEX on Base, Avantis avUSDC vault, EigenCloud EigenLayer restaking, ether.fi liquid restaking (eETH/weETH), CCXT centralized exchange trading (Binance/Aster). Use for: provide liquidity, LP positions, AMM, DEX, fixed rate, yield tokens, restaking, CEX trading, Uniswap, Aerodrome, Pendle, liquidity pools, impermanent loss, fee collection.",
       "references": [
-        "other-protocols/references/boros.md",
-        "other-protocols/references/pendle.md",
-        "other-protocols/references/uniswap.md",
-        "other-protocols/references/projectx.md",
-        "other-protocols/references/avantis.md",
-        "other-protocols/references/eigencloud.md",
-        "other-protocols/references/ccxt.md",
-        "other-protocols/references/errors.md"
+        "skills/other-protocols/references/boros.md",
+        "skills/other-protocols/references/pendle.md",
+        "skills/other-protocols/references/uniswap.md",
+        "skills/other-protocols/references/projectx.md",
+        "skills/other-protocols/references/avantis.md",
+        "skills/other-protocols/references/eigencloud.md",
+        "skills/other-protocols/references/ccxt.md",
+        "skills/other-protocols/references/errors.md"
       ]
     }
   ]
