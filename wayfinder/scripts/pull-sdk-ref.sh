@@ -33,8 +33,8 @@ set -euo pipefail
 
 # --- Parse flags ---
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-SDK_VERSION_FILE="$REPO_ROOT/sdk-version.md"
+SKILL_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+SDK_VERSION_FILE="$SKILL_DIR/sdk-version.md"
 SDK_COMMIT=""
 
 if [[ -f "$SDK_VERSION_FILE" ]]; then
@@ -63,20 +63,15 @@ set -- "${ARGS[@]+"${ARGS[@]}"}"
 # --- Resolve SDK path ---
 if [[ -n "${WAYFINDER_SDK_PATH:-}" ]] && [[ -d "$WAYFINDER_SDK_PATH" ]]; then
     SDK_ROOT="$WAYFINDER_SDK_PATH"
-elif [[ -d "$HOME/Documents/wayfinder-paths-sdk" ]]; then
-    SDK_ROOT="$HOME/Documents/wayfinder-paths-sdk"
-elif [[ -d "$REPO_ROOT/../wayfinder-paths-sdk" ]]; then
-    SDK_ROOT="$(cd "$REPO_ROOT/../wayfinder-paths-sdk" && pwd)"
 elif [[ -d "$HOME/wayfinder-paths-sdk" ]]; then
     SDK_ROOT="$HOME/wayfinder-paths-sdk"
 else
     echo "ERROR: Cannot find wayfinder-paths-sdk." >&2
     echo "Tried:" >&2
     echo "  \$WAYFINDER_SDK_PATH (not set or missing)" >&2
-    echo "  $REPO_ROOT/../wayfinder-paths-sdk" >&2
     echo "  $HOME/wayfinder-paths-sdk" >&2
     echo "" >&2
-    echo "Set WAYFINDER_SDK_PATH or clone the SDK next to this repo." >&2
+    echo "Set WAYFINDER_SDK_PATH or clone the SDK to \$HOME/wayfinder-paths-sdk." >&2
     exit 1
 fi
 

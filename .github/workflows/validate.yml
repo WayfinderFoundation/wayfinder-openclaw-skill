@@ -20,7 +20,7 @@ jobs:
       - name: Read pinned SDK version
         id: sdk-version
         run: |
-          SDK_COMMIT=$(cat wayfinder-openclaw/sdk-version.md | tr -d '[:space:]')
+          SDK_COMMIT=$(cat wayfinder-openclaw/wayfinder/sdk-version.md | tr -d '[:space:]')
           echo "commit=$SDK_COMMIT" >> "$GITHUB_OUTPUT"
           echo "Pinned SDK ref: $SDK_COMMIT"
 
