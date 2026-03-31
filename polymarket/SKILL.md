@@ -124,9 +124,49 @@ Always verify balances via `polymarket --action status` after bridge operations.
 
 ## Common workflows
 
+### Search strategy — getting good results from Gamma
+
+Gamma's search is literal and token-based, not semantic. Follow these rules to maximize recall:
+
+**1. Use short, lowercase, token-based queries — never natural language.**
+
+| Bad | Good |
+|-----|------|
+| `Will Bitcoin go up in the next 15 minutes` | `bitcoin 15m up` |
+| `Bitcoin Up 15 Minutes` | `bitcoin 15 min up` |
+
+**2. Expand synonyms with multiple queries — Gamma won't do this for you.**
+
+Market titles are inconsistent (`15 min`, `15 minutes`, `15m`, `short term`). Always run several variant queries and merge results:
+
+```
+bitcoin 15m up
+bitcoin 15 minute up
+btc 15m up
+btc short term up
+```
+
+**3. Try partial / less-specific queries for better recall.**
+
+Sometimes casting a wider net works better — search for the core subject and filter locally:
+
+```
+bitcoin 15
+bitcoin short term
+bitcoin minute
+```
+
+**4. Multi-pass search procedure (use this for every search):**
+
+1. Generate 3–5 short query variants covering synonyms, abbreviations, and partial terms.
+2. Run `polymarket --action search` for each variant.
+3. Deduplicate results by `event.id` (or `conditionId` / `market_slug`).
+4. Rank by relevance to the user's intent (prefer higher volume/liquidity and active markets).
+5. Present the merged, deduplicated results.
+
 ### Finding a market
 
-1. Search by keyword: `polymarket --action search --query "bitcoin" --limit 5`
+1. **Search by keyword (multi-pass):** generate query variants per the strategy above, then run `polymarket --action search --query "<variant>" --limit 5` for each.
 2. Browse trending markets: `polymarket --action trending --limit 10`
 3. Get market details: `polymarket --action get_market --market_slug "the-slug"`
 4. Check the order book: `polymarket --action order_book --token_id <token_id>`
