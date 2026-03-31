@@ -72,7 +72,6 @@
       "references": [
         "wayfinder/references/commands.md",
         "wayfinder/references/tokens-and-pools.md",
-        "wayfinder/references/delta-lab.md",
         "wayfinder/references/errors.md",
         "wayfinder/references/setup.md",
         "wayfinder/references/simulation-dry-run.md"
@@ -113,6 +112,15 @@
       "references": [
         "contracts/references/contracts.md",
         "contracts/references/errors.md"
+      ]
+    },
+    {
+      "name": "wayfinder-delta-lab",
+      "entry": "delta-lab/SKILL.md",
+      "description": "Cross-venue DeFi market data, historical rates, and yield discovery via Delta Lab. Search assets, screen lending/perp/price/borrow-route markets, pull historical timeseries, find top APY opportunities, discover delta-neutral carry/hedge pairs, compare rates across venues with configurable lookback windows. Use for: market screening, rate comparison, historical data, lookback analysis, funding rates, lending rates, yield opportunities, basis trading research, asset lookup, timeseries, price history, APY discovery, delta-neutral pairs, cross-venue comparison, what are the best rates, where to earn yield.",
+      "references": [
+        "delta-lab/references/delta-lab-data.md",
+        "delta-lab/references/errors.md"
       ]
     },
     {

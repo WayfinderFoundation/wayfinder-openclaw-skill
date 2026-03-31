@@ -61,10 +61,10 @@ poetry run wayfinder resource wayfinder://delta-lab/symbols
 | `wayfinder://hyperliquid/prices/{coin}` | Mid price for a single coin |
 | `wayfinder://hyperliquid/book/{coin}` | Order book for a coin |
 | `wayfinder://contracts/{chain_id}/{address}` | Get deployed contract metadata + ABI (local artifacts) |
-| `wayfinder://delta-lab/{symbol}/basis` | Delta Lab: map an asset symbol to its basis group/root symbol (see `references/delta-lab.md`) |
-| `wayfinder://delta-lab/{symbol}/timeseries/{series}/{lookback_days}/{limit}` | Delta Lab: timeseries snapshot for one symbol + series (see `references/delta-lab.md`) |
+| `wayfinder://delta-lab/{symbol}/basis` | Delta Lab: map an asset symbol to its basis group/root symbol (see `wayfinder-delta-lab` skill) |
+| `wayfinder://delta-lab/{symbol}/timeseries/{series}/{lookback_days}/{limit}` | Delta Lab: timeseries snapshot for one symbol + series (see `wayfinder-delta-lab` skill) |
 
-**Delta Lab market screens:** see `references/delta-lab.md` (asset lookup + price/perp/lending/borrow-route screens).
+**Delta Lab market screens & historical data:** see the `wayfinder-delta-lab` skill for full documentation on asset lookup, screens, timeseries, APY sources, and delta-neutral pairs.
 
 **Token lookup order — always search or use gas endpoint first:**
 
@@ -241,7 +241,7 @@ poetry run wayfinder run_strategy --strategy stablecoin_yield_strategy --action 
 
 - [Commands Reference](references/commands.md)
 - [Token & Pool Discovery](references/tokens-and-pools.md)
-- [Delta Lab Market Data](references/delta-lab.md)
+- [Delta Lab Market Data](../delta-lab/SKILL.md)
 - [Error Reference](references/errors.md)
 - [Setup Guide](references/setup.md)
 - [Simulation & Dry-Run](references/simulation-dry-run.md)
