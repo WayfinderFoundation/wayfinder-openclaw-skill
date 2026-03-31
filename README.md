@@ -4,11 +4,71 @@ OpenClaw skill pack for [Wayfinder Paths SDK](https://github.com/WayfinderFounda
 
 ## Install
 
+**macOS / Linux:**
+
 ```bash
-git clone https://github.com/user/wayfinder-openclaw-skill.git ~/.agents/skills/wayfinder
+curl -fsSL https://raw.githubusercontent.com/WayfinderFoundation/wayfinder-openclaw-skill/main/install.sh | bash
 ```
 
-All 10 skills are auto-discovered by OpenClaw on next startup — no config changes needed.
+**Windows (PowerShell):**
+
+```powershell
+git clone https://github.com/WayfinderFoundation/wayfinder-openclaw-skill.git
+cd wayfinder-openclaw-skill
+.\install.ps1
+```
+
+Or clone and run on any platform:
+
+```bash
+git clone https://github.com/WayfinderFoundation/wayfinder-openclaw-skill.git
+cd wayfinder-openclaw-skill
+./install.sh        # macOS / Linux
+.\install.ps1       # Windows
+```
+
+## Update
+
+Re-run the install script — it pulls latest and updates links automatically:
+
+```bash
+# macOS / Linux
+~/.openclaw/workspace/.repos/wayfinder-openclaw-skill/install.sh
+
+# Windows (PowerShell)
+& "$env:USERPROFILE\.openclaw\workspace\.repos\wayfinder-openclaw-skill\install.ps1"
+```
+
+## Uninstall
+
+```bash
+# macOS / Linux
+~/.openclaw/workspace/.repos/wayfinder-openclaw-skill/install.sh --uninstall
+
+# Windows (PowerShell)
+& "$env:USERPROFILE\.openclaw\workspace\.repos\wayfinder-openclaw-skill\install.ps1" -Uninstall
+```
+
+All skills are auto-discovered by OpenClaw on next startup — no config changes needed.
+
+## Upgrading from older versions
+
+Older versions installed the skill as a single git clone (e.g. `~/.openclaw/workspace/skills/wayfinder/`). The new version uses separate folders per skill domain. Remove the old install first, then run the installer:
+
+```bash
+# macOS / Linux
+rm -rf ~/.openclaw/workspace/skills/wayfinder
+curl -fsSL https://raw.githubusercontent.com/WayfinderFoundation/wayfinder-openclaw-skill/main/install.sh | bash
+```
+
+```powershell
+# Windows (PowerShell)
+Remove-Item -Recurse -Force "$env:USERPROFILE\.openclaw\workspace\skills\wayfinder"
+git clone https://github.com/WayfinderFoundation/wayfinder-openclaw-skill.git
+cd wayfinder-openclaw-skill; .\install.ps1
+```
+
+The installer will skip any existing real directories it finds, so you must remove the old `wayfinder` folder before it can create the new symlink.
 
 ## Skills
 
