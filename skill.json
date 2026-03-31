@@ -135,7 +135,7 @@
     {
       "name": "wayfinder-aave",
       "entry": "aave/SKILL.md",
-      "description": "Lend and borrow on Aave V3 — supply collateral, borrow assets, repay loans, manage collateral flags, claim rewards, check health factor, view market rates and user positions. Multi-chain: Ethereum, Base, Arbitrum, Optimism, Polygon. Use for: Aave, supply, borrow, collateral, health factor, liquidation risk, interest rates, flash loans, lending protocol.",
+      "description": "Lend and borrow on Aave V3 — supply collateral, borrow assets, repay loans, manage collateral flags, claim rewards, check health factor, view market rates and user positions. Multi-chain: Ethereum, Base, Arbitrum, Optimism, Polygon. Use for: Aave, supply, borrow, collateral, health factor, liquidation risk, interest rates, lending protocol.",
       "references": [
         "aave/references/aave-v3.md",
         "aave/references/errors.md"

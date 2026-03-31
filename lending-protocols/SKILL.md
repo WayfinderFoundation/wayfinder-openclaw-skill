@@ -79,10 +79,29 @@ adapter = get_adapter(MorphoAdapter, "main")
 | `get_full_user_state_per_chain` | `chain_id, account, include_zero_positions=False` | Single-chain position snapshot |
 | `get_claimable_rewards` | `chain_id, account?` | Claimable Merkl + URD rewards |
 
+### Execution Methods
+
+| Method | Parameters | Description |
+|--------|-----------|-------------|
+| `supply_collateral` | `chain_id, market_unique_key, qty` | Deposit collateral (required before borrowing) |
+| `withdraw_collateral` | `chain_id, market_unique_key, qty, withdraw_full=False` | Withdraw collateral (check health factor first) |
+| `lend` | `chain_id, market_unique_key, qty` | Supply loan asset |
+| `unlend` | `chain_id, market_unique_key, qty, withdraw_full=False` | Withdraw supply |
+| `borrow` | `chain_id, market_unique_key, qty` | Borrow loan asset |
+| `repay` | `chain_id, market_unique_key, qty, repay_full=False` | Repay borrow |
+| `claim_rewards` | `chain_id, claim_merkl=True, claim_urd=True` | Claim Merkl + URD rewards |
+| `vault_deposit` | `chain_id, vault_address, assets` | MetaMorpho ERC-4626 deposit |
+| `vault_withdraw` | `chain_id, vault_address, assets` | MetaMorpho ERC-4626 withdraw |
+| `vault_mint` | `chain_id, vault_address, shares` | MetaMorpho ERC-4626 mint |
+| `vault_redeem` | `chain_id, vault_address, shares` | MetaMorpho ERC-4626 redeem |
+| `borrow_with_jit_liquidity` | `chain_id, market_unique_key, qty, atomic=True` | Borrow with allocator JIT liquidity |
+
 ### Gotchas
 
 - Morpho has **two layers**: direct Blue markets and MetaMorpho vaults. Use `get_all_markets` for the former and `get_all_vaults` for the latter.
 - Deployed on many chains (Ethereum, Base, Arbitrum, Optimism, and more). Always pass the correct `chain_id`.
+- **Collateral is separate from supply:** borrowing requires `supply_collateral(...)`, not `lend(...)`.
+- **Full close uses shares:** `repay_full=True` / `withdraw_full=True` avoids dust from interest accrual.
 - Read-only calls do not need a wallet label.
 
 ---
