@@ -1,11 +1,11 @@
 ---
 name: wayfinder-polymarket
-description: Trade prediction markets on Polymarket — search events, browse trending markets, buy and sell outcome shares (YES/NO), place limit orders, check positions and P&L, bridge USDC collateral, view order books and price history. Use for betting, predictions, elections, sports, event outcomes, will X happen, probability markets, Polymarket.
+description: Trade prediction markets on Polymarket — search events, browse trending markets, quote average execution from the live book, buy and sell outcome shares (YES/NO), place limit orders, check positions and P&L, bridge USDC collateral, view order books and price history. Use for betting, predictions, elections, sports, event outcomes, will X happen, probability markets, Polymarket.
 ---
 
 # Polymarket
 
-Polymarket is a prediction market platform on Polygon. Use the `polymarket` command for read-only queries (market search, prices, order books, account status) and `polymarket_execute` for live execution (bridging collateral, buying/selling shares, limit orders, cancellations, and redemptions).
+Polymarket is a prediction market platform on Polygon. Use the `polymarket` command for read-only queries (market search, prices, quotes, order books, account status) and `polymarket_execute` for live execution (bridging collateral, buying/selling shares, limit orders, cancellations, and redemptions).
 
 **Always require explicit user confirmation before running `polymarket_execute`.**
 
@@ -13,13 +13,13 @@ Polymarket is a prediction market platform on Polygon. Use the `polymarket` comm
 
 ## `polymarket` -- Polymarket market + account reads
 
-Read-only access to Polymarket markets, prices, order books, and user status.
+Read-only access to Polymarket markets, prices, book-based quotes, order books, and user status.
 
 **Tradability filter:** a market can be "found" but not tradable. Filter for `enableOrderBook`, `acceptingOrders`, `active`, `closed != true`, and non-empty `clobTokenIds`.
 
 | Parameter | Type | Required | Default | Notes |
 |-----------|------|----------|---------|-------|
-| `action` | `status` \| `search` \| `trending` \| `get_market` \| `get_event` \| `price` \| `order_book` \| `price_history` \| `bridge_status` \| `open_orders` | **Yes** | — | — |
+| `action` | `status` \| `search` \| `trending` \| `get_market` \| `get_event` \| `quote` \| `price` \| `order_book` \| `price_history` \| `bridge_status` \| `open_orders` | **Yes** | — | — |
 | `wallet_label` | string | No | — | Resolves `account` from config; required for `open_orders` |
 | `wallet_address` | string | No | — | Alternative to `wallet_label` for account-based reads |
 | `account` | string | No | — | Direct account address (alternative to wallet inputs) |
@@ -40,8 +40,11 @@ Read-only access to Polymarket markets, prices, order books, and user status.
 | `end_date_min` | string | No | `YYYY-MM-DD` | `search` only. Min event end date (UTC) |
 | `market_slug` | string | **get_market** | — | Market slug |
 | `event_slug` | string | **get_event** | — | Event slug |
-| `token_id` | string | **price, order_book, price_history** | — | Polymarket CLOB token id (optional for `open_orders` filter) |
-| `side` | `BUY` \| `SELL` | No | `BUY` | `price` only |
+| `outcome` | TEXT | No | `"YES"` | String or numeric index; used with `market_slug` for `quote` |
+| `token_id` | string | **price, order_book, price_history** | — | Polymarket CLOB token id (also valid for `quote`; optional for `open_orders` filter) |
+| `side` | `BUY` \| `SELL` | No | `BUY` | `price`, `quote` |
+| `amount_usdc` | `TEXT` | **quote (BUY)** | — | Quote notional USDC to spend |
+| `shares` | `TEXT` | **quote (SELL)** | — | Quote shares to sell |
 | `interval` | string | No | `"1d"` | `price_history` only |
 | `start_ts` | `TEXT` | No | — | `price_history` only (unix seconds) |
 | `end_ts` | `TEXT` | No | — | `price_history` only (unix seconds) |
@@ -50,6 +53,12 @@ Read-only access to Polymarket markets, prices, order books, and user status.
 **Action-specific requirements:**
 - `status`, `bridge_status`: require an `account` (via `--account`, `--wallet_address`, or `--wallet_label`).
 - `open_orders`: requires `--wallet_label` and a wallet with `private_key_hex` in `config.json` (Level-2 auth). Optional: `--token_id` to filter.
+- `quote`: use `--amount_usdc` for `--side BUY`, or `--shares` for `--side SELL`. You may quote by `--token_id` directly or by `--market_slug` + `--outcome`.
+
+**`price` vs `quote`:**
+- `price` returns the current quoted CLOB price for a token.
+- `quote` walks the live order book and returns weighted-average execution, worst fill, levels consumed, and whether the requested size is fully fillable.
+- For `quote`, `BUY` means USDC notional to spend and `SELL` means shares to sell.
 
 ```bash
 # Search markets
@@ -60,6 +69,12 @@ poetry run wayfinder polymarket --action status --wallet_label main
 
 # CLOB order book
 poetry run wayfinder polymarket --action order_book --token_id 123456
+
+# Book-based quote for a $100 BUY
+poetry run wayfinder polymarket --action quote --market_slug "some-market-slug" --outcome YES --side BUY --amount_usdc 100
+
+# Book-based quote for selling 25 shares
+poetry run wayfinder polymarket --action quote --token_id 123456 --side SELL --shares 25
 ```
 
 ---
@@ -169,15 +184,17 @@ bitcoin minute
 1. **Search by keyword (multi-pass):** generate query variants per the strategy above, then run `polymarket --action search --query "<variant>" --limit 5` for each.
 2. Browse trending markets: `polymarket --action trending --limit 10`
 3. Get market details: `polymarket --action get_market --market_slug "the-slug"`
-4. Check the order book: `polymarket --action order_book --token_id <token_id>`
+4. Quote the intended size: `polymarket --action quote --market_slug "the-slug" --outcome YES --side BUY --amount_usdc 10`
+5. Check the raw order book if needed: `polymarket --action order_book --token_id <token_id>`
 
 ### Placing a bet
 
 1. Search for the market and confirm it is tradable (`enableOrderBook`, `acceptingOrders`, `active`, not closed, non-empty `clobTokenIds`).
 2. Check your collateral balance: `polymarket --action status --wallet_label main`
 3. If needed, bridge USDC to USDC.e: `polymarket_execute --action bridge_deposit --wallet_label main --amount 10`
-4. Buy shares: `polymarket_execute --action buy --wallet_label main --market_slug "the-slug" --outcome YES --amount_usdc 5`
-5. Verify position: `polymarket --action status --wallet_label main`
+4. Quote the intended buy: `polymarket --action quote --market_slug "the-slug" --outcome YES --side BUY --amount_usdc 5`
+5. Buy shares: `polymarket_execute --action buy --wallet_label main --market_slug "the-slug" --outcome YES --amount_usdc 5`
+6. Verify position: `polymarket --action status --wallet_label main`
 
 ### Closing positions
 

@@ -161,7 +161,7 @@ ok, result = await adapter.some_method()
 
 ### Notes
 
-- These adapters exist in the SDK but do not have dedicated reference documentation yet.
+- Use the combined Aerodrome reference for deeper method guidance and caveats.
 - Aerodrome is a ve(3,3)-style DEX; Slipstream adds concentrated liquidity on top.
 
 ---
@@ -281,9 +281,10 @@ Uses the standard CCXT unified API on each exchange property:
 - [Pendle Reference](references/pendle.md)
 - [Uniswap Reference](references/uniswap.md)
 - [ProjectX Reference](references/projectx.md)
+- [Aerodrome + Slipstream Reference](references/aerodrome.md)
 - [Avantis Reference](references/avantis.md)
 - [EigenCloud Reference](references/eigencloud.md)
 - [CCXT Reference](references/ccxt.md)
 - [Coding Interface](../coding-interface/SKILL.md)
-- Note: Aerodrome and ether.fi reference docs are pending
+- Note: ether.fi reference docs are pending
 - [Error Reference](references/errors.md)
