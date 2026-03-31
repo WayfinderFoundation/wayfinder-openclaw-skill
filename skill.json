@@ -168,6 +168,7 @@
       "entry": "other-protocols/SKILL.md",
       "description": "Additional DeFi protocols — Boros fixed-rate interest markets, Pendle yield tokenization (PT/YT), Uniswap V3 concentrated liquidity LP, ProjectX LP on HyperEVM, Aerodrome and Slipstream DEX on Base, Avantis avUSDC vault, EigenCloud EigenLayer restaking, ether.fi liquid restaking (eETH/weETH), CCXT centralized exchange trading (Binance/Aster). Use for: provide liquidity, LP positions, AMM, DEX, fixed rate, yield tokens, restaking, CEX trading, Uniswap, Aerodrome, Pendle, liquidity pools, impermanent loss, fee collection.",
       "references": [
+        "other-protocols/references/aerodrome.md",
         "other-protocols/references/boros.md",
         "other-protocols/references/pendle.md",
         "other-protocols/references/uniswap.md",

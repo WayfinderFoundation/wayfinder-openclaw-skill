@@ -136,8 +136,8 @@ ok, result = await adapter.some_method()
 
 - **Chain**: Base
 - **Description**: Aerodrome is the primary DEX on Base. Slipstream is its concentrated liquidity variant (similar to Uniswap V3 tick-range positions).
-- **Aerodrome Adapter**: `AerodromeAdapter`
-- **Slipstream Adapter**: `AerodromeSlipstreamAdapter`
+- **Aerodrome Adapter**: `wayfinder_paths.adapters.aerodrome_adapter.adapter.AerodromeAdapter`
+- **Slipstream Adapter**: `wayfinder_paths.adapters.aerodrome_slipstream_adapter.adapter.AerodromeSlipstreamAdapter`
 
 ### Aerodrome Key Methods
 
@@ -178,6 +178,7 @@ ok, result = await adapter.some_method()
 | Method | Purpose | Notes |
 |--------|---------|-------|
 | `get_all_markets()` | Single "market" describing the configured vault (TVL, supply, share price) | Read-only |
+| `get_vault_manager_state()` | Vault manager state (capacity, parameters) | Read-only |
 | `fetch_trailing_apy(...)` | Trailing APY for the vault | Read-only |
 | `get_pos(account, include_usd)` | Position snapshot (shares, assets, maxRedeem/maxWithdraw) | Read-only if `account` passed |
 | `get_full_user_state(account, include_usd)` | Standardized user state wrapper | Read-only if `account` passed |
@@ -225,7 +226,7 @@ ok, result = await adapter.some_method()
 
 - **Chain**: Ethereum
 - **Description**: Liquid restaking protocol. Stake ETH to receive eETH, wrap to weETH for DeFi composability, and request delayed withdrawals.
-- **Adapter**: `EtherfiAdapter`
+- **Adapter**: `wayfinder_paths.adapters.etherfi_adapter.adapter.EtherfiAdapter`
 
 ### Key Methods
 
