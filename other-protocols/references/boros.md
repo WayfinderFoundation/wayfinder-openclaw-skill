@@ -6,7 +6,7 @@ Boros provides fixed-rate markets on Arbitrum. It allows locking in a fixed fund
 
 - **Type**: `BOROS`
 - **Module**: `wayfinder_paths.adapters.boros_adapter.adapter.BorosAdapter`
-- **Capabilities**: `market.read`, `market.quote`, `position.open`, `position.close`, `collateral.deposit`, `collateral.withdraw`
+- **Capabilities**: `market.read`, `market.quote`, `vault.list`, `vault.read`, `position.open`, `position.close`, `collateral.deposit`, `collateral.withdraw`
 
 ## Market Data
 
@@ -34,7 +34,7 @@ from wayfinder_paths.mcp.scripting import get_adapter
 from wayfinder_paths.adapters.boros_adapter import BorosAdapter
 
 adapter = get_adapter(BorosAdapter, "main")
-success, markets = await adapter.list_markets_all()
+success, markets = await adapter.get_all_markets(active_only=True)
 ```
 
 ## Key Concepts
@@ -60,6 +60,7 @@ All BorosAdapter methods return `tuple[bool, result]` — always unpack. All fie
 | Method | Purpose | Best For |
 |--------|---------|----------|
 | `list_tenor_quotes(underlying_symbol, platform)` | Fast market+rate snapshot (no orderbooks) | Quick tenor-level APR scan |
+| `get_all_markets(*, account=None, include_vault_summary=True, include_history_summary=True)` | Normalized market list with nested `rates`, `vault`, and compact `history` | UI / reporting / account-aware market views |
 | `quote_market(market)` / `quote_market_by_id(market_id)` | Detailed APR quote with orderbook data | Single market analysis |
 | `quote_markets_for_underlying(underlying_symbol)` | Quotes across all tenors for an underlying | Tenor curve building |
 | `list_markets()` / `list_markets_all()` | Discover all markets (auto-paginates) | Market discovery |
@@ -70,8 +71,30 @@ All BorosAdapter methods return `tuple[bool, result]` — always unpack. All fie
 | `search_markets(*, collateral=None, asset=None, platform=None, active_only=True)` | Search markets with combined filters | Targeted queries |
 | `list_markets_by_collateral(token_id)` | Filter markets by collateral type | Collateral-specific queries |
 | `get_enriched_market(market_id)` | Single market with all metadata joined | Full market context |
+| `get_vaults_summary(*, account=None, include_expired=True)` | Normalized Boros vault summary | Vault capacity, TVL, expiry, account LP state |
+| `best_yield_vault(...)` / `is_vault_open_for_deposit(...)` | Depositability policy helpers | Choosing a vault safely |
 | `get_market_history(market_id, time_frame)` | OHLCV + rate history (`5m`, `1h`, `1d`, `1w`) | Historical analysis |
 | `get_cash_fee_data(*, token_id)` | Read MarketHub.getCashFeeData from chain | Min cross cash requirements |
+
+### Market + Vault View (`get_all_markets`)
+
+`get_all_markets()` is the repo-convention Boros surface for reporting. It returns one dict per market with:
+
+- top-level market fields: `market_id`, `market_address`, `symbol`, `underlying_symbol`, `platform`, `collateral`, `state`, `is_active`, `maturity_ts`, `tenor_days`
+- nested `rates`: `floating_apr`, `mark_apr`, `vault_apy`, `mid_apr`, `best_bid_apr`, `best_ask_apr`, funding moving averages, `volume_24h`, `notional_oi`
+- nested `vault`: `apy`, `expiry`, `collateral_symbol`, `tvl`, `tvl_usd`, `available_tokens`, `available_usd`
+- nested `history`: compact summary with `latest_mark_rate`, `avg_mark_rate`, `latest_floating_rate`, `avg_floating_rate`, and latest funding moving averages
+
+Useful flags:
+- `active_only=True` — only currently active live markets
+- `account="0x..."` — include `vault.user` balances for that wallet
+- `include_vault_summary=False` — market + rate view only
+- `include_history_summary=False` — skip per-market history reads
+
+Account-specific expired vault note:
+- When `account` is provided, `get_all_markets()` also appends inactive vault-only rows for expired markets that have rolled off `/markets` but still have real user LP/deposit exposure.
+- Those rows may use fallback labels like `BOROS-MARKET-34` when Boros no longer serves market metadata for that expired market ID.
+- Rows are not appended for `availableBalanceToDeposit` alone, because that would duplicate idle collateral across many expired vault IDs.
 
 ### Quote Fields (BorosMarketQuote)
 
@@ -79,6 +102,11 @@ All BorosAdapter methods return `tuple[bool, result]` — always unpack. All fie
 - `mark_apr`, `floating_apr`, `long_yield_apr` — mark and floating rates
 - `funding_7d_ma_apr`, `funding_30d_ma_apr` — moving averages
 - `volume_24h`, `notional_oi`, `asset_mark_price` — market data
+
+For `get_all_markets()`, the headline current-rate fields are:
+- `rates.floating_apr`
+- `rates.mark_apr`
+- `rates.vault_apy`
 
 ### Account State Reads (MUST check before trading)
 
@@ -178,6 +206,10 @@ OFT bridge requires `msg.value = amount + fee`. Amounts must be rounded to the c
 - **Chain**: Boros operates on Arbitrum (42161). Ensure your wallet has Arbitrum ETH for gas.
 - **HYPE acquisition paths**: Either BRAP→HyperEVM HYPE→OFT bridge, or Hyperliquid spot→HyperEVM→OFT bridge. OFT bridge requires `msg.value = amount + fee`, amounts rounded to `decimalConversionRate()`.
 - **Markets endpoint**: `marketId` queries return lists. Underlying symbol lives at `metadata.assetSymbol`.
+- **Vault display vs orchestration**: `get_vaults_summary()` includes expired vaults by default so rollover/withdraw logic can still see them. Use `include_expired=False` only for a user-facing "currently depositable vaults" view.
+- **Account-specific expired market rows**: `get_all_markets(account=...)` can append inactive vault-only rows for real LP/deposit exposure on rolled markets. Fallback symbols like `BOROS-MARKET-34` are expected when Boros no longer serves metadata for that market ID.
+- **Do not treat `availableBalanceToDeposit` as a closed vault position**: that value can repeat across many expired vault IDs for the same idle collateral balance.
+- **History timestamp key**: live Boros history uses `ts` for the candle timestamp; some older mocks may use `t`.
 - **Funding sign convention**: Negative = shorts pay longs. Positive = longs pay shorts. Get this wrong and your hedge is backwards.
 - **Quote methods return dataclass instances, not dicts**: `list_tenor_quotes()` returns `list[BorosTenorQuote]` and `quote_market()`/`quote_markets_for_underlying()` return `BorosMarketQuote` — these are `@dataclass` objects (defined in `boros_adapter/types.py`). Access fields with attribute syntax (`q.mid_apr`, `q.tenor_days`), NOT dict syntax (`q["mid_apr"]`). For JSON serialization, use `dataclasses.asdict(q)` first — calling `json.dumps()` directly on a dataclass throws `TypeError`.
 - **Error type changes on failure**: When `success=False`, the second tuple element is an error string, not the typed data object. Always check `success` before accessing result fields (e.g., `q.mid_apr` on a string will raise `AttributeError`).

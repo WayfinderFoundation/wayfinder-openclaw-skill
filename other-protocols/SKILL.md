@@ -28,7 +28,10 @@ ok, result = await adapter.some_method()
 
 | Method | Purpose |
 |--------|---------|
+| `get_all_markets(...)` | Normalized Boros market list with nested rates, vault summary, and optional history |
+| `get_vaults_summary(...)` | Normalized Boros vault summary, optionally including account LP/deposit state |
 | `list_markets_all()` | List all available Boros markets |
+| `best_yield_vault(...)` | Find the highest-APY depositable vault that fits policy filters |
 | `get_scaling_factor(...)` | Get the scaling factor for a market |
 | `sweep_isolated_to_cross(...)` | Move collateral from isolated to cross margin |
 | `tick_from_rate(rate)` | Convert an interest rate to a tick value |
@@ -39,6 +42,7 @@ ok, result = await adapter.some_method()
 - Returns `tuple[bool, result]` for all methods -- always unpack.
 - Yield Units (YU) are the core trading unit. 1 YU is approximately $1 for USDT collateral.
 - Supports cross and isolated margin types.
+- Boros also exposes vault-level reads (`vault.list`, `vault.read`) for LP capacity and account-specific vault state.
 - Rate/tick conversion is essential for placing orders at specific rates.
 - Collateral types: WBTC (1), WETH (2), USDT (3), BNB (4), HYPE (5).
 
