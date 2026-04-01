@@ -1,28 +1,25 @@
 #!/usr/bin/env bash
 # install.sh — Install or update wayfinder-openclaw skills.
 #
-# Clones the repo (or pulls latest) into a cache directory, then copies
-# each skill folder into the OpenClaw skills directory. Running it again
-# updates everything in place.
+# Copies each skill folder from the repo into the OpenClaw skills directory.
+# Running it again updates everything in place.
 #
 # Usage:
 #   ./install.sh                   Install/update with defaults
 #   ./install.sh --skills-dir DIR  Override skills install directory
-#   ./install.sh --repo-dir DIR    Override where the repo is cached
-#   ./install.sh --uninstall       Remove installed skills and cached repo
+#   ./install.sh --repo-dir DIR    Override repo source directory (default: directory containing this script)
+#   ./install.sh --uninstall       Remove installed skills
 #
 # Environment:
 #   OPENCLAW_SKILLS_DIR   Override default skills directory (~/.openclaw/workspace/skills)
-#   OPENCLAW_REPO_DIR     Override default repo cache (~/.openclaw/workspace/.repos/wayfinder-openclaw-skill)
 
 set -euo pipefail
 
-REPO_URL="https://github.com/WayfinderFoundation/wayfinder-openclaw-skill.git"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DEFAULT_SKILLS_DIR="$HOME/.openclaw/workspace/skills"
-DEFAULT_REPO_DIR="$HOME/.openclaw/workspace/.repos/wayfinder-openclaw-skill"
 
 SKILLS_DIR="${OPENCLAW_SKILLS_DIR:-$DEFAULT_SKILLS_DIR}"
-REPO_DIR="${OPENCLAW_REPO_DIR:-$DEFAULT_REPO_DIR}"
+REPO_DIR="$SCRIPT_DIR"
 UNINSTALL=false
 
 while [[ $# -gt 0 ]]; do
@@ -40,7 +37,7 @@ while [[ $# -gt 0 ]]; do
             shift
             ;;
         --help|-h)
-            head -17 "$0" | tail -15
+            head -14 "$0" | tail -12
             exit 0
             ;;
         *)
@@ -85,11 +82,6 @@ if $UNINSTALL; then
         fi
     fi
 
-    if [[ -d "$REPO_DIR" ]]; then
-        rm -rf "$REPO_DIR"
-        echo "  Removed cached repo: $REPO_DIR"
-    fi
-
     echo "Done."
     exit 0
 fi
@@ -99,32 +91,13 @@ fi
 echo "Wayfinder OpenClaw Skill Installer"
 echo "==================================="
 echo "Skills dir: $SKILLS_DIR"
-echo "Repo cache: $REPO_DIR"
+echo "Source:     $REPO_DIR"
 echo ""
 
-# Clone or pull
-if [[ -d "$REPO_DIR/.git" ]]; then
-    echo "Updating existing repo..."
-    git -C "$REPO_DIR" fetch --quiet
-    BEFORE=$(git -C "$REPO_DIR" rev-parse HEAD)
-    git -C "$REPO_DIR" pull --quiet
-    AFTER=$(git -C "$REPO_DIR" rev-parse HEAD)
-
-    if [[ "$BEFORE" == "$AFTER" ]]; then
-        echo "Already up to date. ($(echo "$AFTER" | cut -c1-8))"
-    else
-        echo "Updated: $(echo "$BEFORE" | cut -c1-8) -> $(echo "$AFTER" | cut -c1-8)"
-        CHANGED_SKILLS=$(git -C "$REPO_DIR" diff --name-only "$BEFORE" "$AFTER" | cut -d/ -f1 | sort -u)
-        echo "Changed domains: $CHANGED_SKILLS"
-    fi
-else
-    echo "Cloning repo..."
-    mkdir -p "$(dirname "$REPO_DIR")"
-    git clone --quiet "$REPO_URL" "$REPO_DIR"
-    echo "Cloned at $(git -C "$REPO_DIR" rev-parse --short HEAD)"
+if [[ ! -f "$REPO_DIR/skill.json" ]]; then
+    echo "Error: skill.json not found in $REPO_DIR" >&2
+    exit 1
 fi
-
-echo ""
 
 # Create skills directory
 mkdir -p "$SKILLS_DIR"
