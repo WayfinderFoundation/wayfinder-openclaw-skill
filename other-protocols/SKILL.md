@@ -224,26 +224,38 @@ ok, result = await adapter.some_method()
 
 ## ether.fi
 
-- **Chain**: Ethereum
-- **Description**: Liquid restaking protocol. Stake ETH to receive eETH, wrap to weETH for DeFi composability, and request delayed withdrawals.
+- **Chain**: Ethereum mainnet only (`chain_id = 1`)
+- **Description**: Liquid restaking protocol. Stake ETH to receive eETH (rebasing), wrap to weETH (non-rebasing, DeFi-composable), and manage async withdrawals via WithdrawRequest NFTs.
 - **Adapter**: `wayfinder_paths.adapters.etherfi_adapter.adapter.EtherfiAdapter`
+- **Type**: `ETHERFI`
 
 ### Key Methods
 
-| Method | Purpose |
-|--------|---------|
-| `stake_eth(...)` | Stake ETH to receive eETH |
-| `wrap_eeth(...)` | Wrap eETH into weETH |
-| `unwrap_weeth(...)` | Unwrap weETH back to eETH |
-| `request_withdraw(...)` | Request a withdrawal (enters queue) |
-| `claim_withdraw(...)` | Claim a completed withdrawal |
-| `get_pos(...)` | Get current position/balance snapshot |
+| Method | Parameters | Description |
+|--------|-----------|-------------|
+| `get_pos` | `account?, chain_id=1, include_shares=True` | eETH/weETH balances, conversion rate, total pooled ether |
+| `is_withdraw_finalized` | `token_id, chain_id=1` | Check if a WithdrawRequest NFT is claimable |
+| `get_claimable_withdraw` | `token_id, chain_id=1` | Claimable ETH amount (returns 0 if not finalized) |
+| `stake_eth` | `amount_wei, chain_id=1, referral?, check_paused=True` | Stake ETH to receive eETH shares |
+| `wrap_eeth` | `amount_eeth, chain_id=1` | Wrap eETH into weETH (performs approval first) |
+| `wrap_eeth_with_permit` | `amount_eeth, permit, chain_id=1` | Wrap eETH into weETH with EIP-2612 permit (single tx) |
+| `unwrap_weeth` | `amount_weeth, chain_id=1` | Unwrap weETH back to eETH |
+| `request_withdraw` | `amount_eeth, recipient?, chain_id=1` | Request async withdrawal (mints WithdrawRequest NFT) |
+| `request_withdraw_with_permit` | `amount_eeth, permit, owner?, chain_id=1` | Request async withdrawal with EIP-2612 permit |
+| `claim_withdraw` | `token_id, chain_id=1` | Claim finalized withdrawal (receives ETH) |
 
-### Notes
+### Withdrawal Flow
 
-- Similar flow to Lido but for restaking rather than staking.
-- weETH is the wrapped, DeFi-composable version of eETH.
-- Reference documentation is pending.
+1. `request_withdraw(amount_eeth=...)` → returns `request_id` (NFT token ID)
+2. Poll `is_withdraw_finalized(token_id=...)` (withdrawals take **days**)
+3. `claim_withdraw(token_id=...)` → receives ETH
+
+### Gotchas
+
+- **Mainnet only** — all operations require `chain_id=1`.
+- eETH is rebasing (share-based); weETH is non-rebasing (value accrues via rate). Wrapping full eETH balance can leave 1 wei dust.
+- Withdrawals are async and take **days**. Always check `is_withdraw_finalized()` before claiming.
+- All amounts are raw ints (wei).
 
 ---
 
@@ -287,5 +299,5 @@ Uses the standard CCXT unified API on each exchange property:
 - [EigenCloud Reference](references/eigencloud.md)
 - [CCXT Reference](references/ccxt.md)
 - [Coding Interface](../coding-interface/SKILL.md)
-- Note: ether.fi reference docs are pending
+- [ether.fi Reference](references/etherfi.md)
 - [Error Reference](references/errors.md)
