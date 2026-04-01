@@ -221,21 +221,39 @@ from wayfinder_paths.adapters.sparklend_adapter import SparkLendAdapter
 adapter = get_adapter(SparkLendAdapter, "main")
 ```
 
-### Key Methods
+### Read Methods (inherited from Aave V3)
 
-Inherits all Aave V3 methods (see Aave V3 subskill) plus:
+| Method | Parameters | Description |
+|--------|-----------|-------------|
+| `get_all_markets` | `chain_id, include_rewards=False` | Market list with rates, caps, LTV, and optional rewards |
+| `get_full_user_state_per_chain` | `chain_id, account, include_rewards=False, include_zero_positions=False` | Position snapshot for one chain |
+| `get_full_user_state` | `account, include_rewards=False, include_zero_positions=False` | Cross-chain position snapshot |
+
+### Execution Methods (inherited from Aave V3)
+
+| Method | Parameters | Description |
+|--------|-----------|-------------|
+| `lend` | `chain_id, underlying_token, qty, native=False` | Supply underlying asset (`qty` is raw int) |
+| `unlend` | `chain_id, underlying_token, qty, native=False, withdraw_full=False` | Withdraw supply |
+| `borrow` | `chain_id, underlying_token, qty, native=False` | Borrow underlying (variable rate) |
+| `repay` | `chain_id, underlying_token, qty, native=False, repay_full=False` | Repay borrow |
+| `set_collateral` | `chain_id, underlying_token, use_as_collateral=True` | Toggle collateral flag |
+| `remove_collateral` | `chain_id, underlying_token` | Disable asset as collateral |
+| `claim_all_rewards` | `chain_id, assets=None, to_address=None` | Claim incentive rewards |
+
+### SparkLend-Specific Methods
 
 | Method | Parameters | Description |
 |--------|-----------|-------------|
 | `borrow_native` | `amount, chain_id` | Borrow native ETH (borrows WETH then unwraps) |
-| `repay_native` | `amount, chain_id, repay_full=False` | Repay with native ETH |
-
-All standard Aave V3 methods are available: `lend`, `unlend`, `borrow`, `repay`, `set_collateral`, `remove_collateral`, `get_full_user_state`, `get_all_markets`, etc.
+| `repay_native` | `amount, chain_id, repay_full=False` | Repay with native ETH (wraps then repays) |
 
 ### Gotchas
 
-- See the Aave V3 subskill for full method documentation and patterns.
+- SparkLend is an Aave V3 fork; all Aave V3 patterns apply (variable rate mode, collateral toggles, raw int amounts).
 - Native ETH operations (`borrow_native`, `repay_native`) handle WETH wrapping/unwrapping automatically.
+- Always pass the correct `chain_id`. Supplying an asset doesn't automatically enable it as collateral — call `set_collateral(...)`.
+- See [Aave V3 reference](../aave/references/aave-v3.md) for full method documentation, script examples, and additional gotchas.
 
 ---
 

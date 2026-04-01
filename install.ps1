@@ -1,14 +1,14 @@
 # install.ps1 — Install or update wayfinder-openclaw skills on Windows.
 #
-# Clones the repo (or pulls latest) into a cache directory, then creates
-# directory junctions for each skill folder into the OpenClaw skills directory.
-# Running it again updates everything in place.
+# Clones the repo (or pulls latest) into a cache directory, then copies
+# each skill folder into the OpenClaw skills directory. Running it again
+# updates everything in place.
 #
 # Usage:
 #   .\install.ps1                          Install/update with defaults
 #   .\install.ps1 -SkillsDir "C:\path"    Override skills install directory
 #   .\install.ps1 -RepoDir "C:\path"      Override where the repo is cached
-#   .\install.ps1 -Uninstall              Remove junctions and cached repo
+#   .\install.ps1 -Uninstall              Remove installed skills and cached repo
 
 param(
     [string]$SkillsDir,
@@ -57,20 +57,17 @@ if ($Uninstall) {
     $skillJson = Join-Path $RepoDir "skill.json"
     if (Test-Path $skillJson) {
         foreach ($dir in (Get-SkillDirs $skillJson)) {
-            $link = Join-Path $SkillsDir $dir
-            if (Test-Path $link) {
-                $item = Get-Item $link -Force
-                if ($item.Attributes -band [IO.FileAttributes]::ReparsePoint) {
-                    cmd /c rmdir "$link" 2>$null
-                    Write-Host "  Removed junction: $link"
-                }
+            $target = Join-Path $SkillsDir $dir
+            if (Test-Path $target) {
+                Remove-Item $target -Recurse -Force
+                Write-Host "  Removed: $target"
             }
         }
 
-        $jsonLink = Join-Path $SkillsDir "wayfinder-openclaw-skill.json"
-        if (Test-Path $jsonLink) {
-            Remove-Item $jsonLink -Force
-            Write-Host "  Removed: $jsonLink"
+        $jsonFile = Join-Path $SkillsDir "wayfinder-openclaw-skill.json"
+        if (Test-Path $jsonFile) {
+            Remove-Item $jsonFile -Force
+            Write-Host "  Removed: $jsonFile"
         }
     }
 
@@ -119,10 +116,10 @@ Write-Host ""
 # Create skills directory
 if (-not (Test-Path $SkillsDir)) { New-Item -ItemType Directory -Path $SkillsDir -Force | Out-Null }
 
-# Create directory junctions for each skill
+# Copy each skill directory
 $skillDirs = Get-SkillDirs (Join-Path $RepoDir "skill.json")
-$linked = 0
-$skipped = 0
+$copied = 0
+$updated = 0
 
 foreach ($dir in $skillDirs) {
     $src = Join-Path $RepoDir $dir
@@ -133,40 +130,31 @@ foreach ($dir in $skillDirs) {
         continue
     }
 
+    # Remove old junctions from previous install method
     if (Test-Path $dest) {
         $item = Get-Item $dest -Force
         if ($item.Attributes -band [IO.FileAttributes]::ReparsePoint) {
-            # Already a junction — verify target
-            $currentTarget = $item.Target
-            if ($currentTarget -eq $src) {
-                $skipped++
-                continue
-            } else {
-                cmd /c rmdir "$dest" 2>$null
-                Write-Host "  Relinked: $dir (was pointing to $currentTarget)"
-            }
-        } else {
-            Write-Host "  WARN: $dest exists as a real directory, skipping (remove it manually to use junction)"
-            continue
+            cmd /c rmdir "$dest" 2>$null
+            Write-Host "  Migrated from junction: $dir"
         }
     }
 
-    # Create directory junction (no admin privileges required)
-    cmd /c mklink /J "$dest" "$src" | Out-Null
-    $linked++
-    Write-Host "  Linked: $dir -> $src"
+    if (Test-Path $dest) {
+        Remove-Item $dest -Recurse -Force
+        Copy-Item $src $dest -Recurse
+        $updated++
+    } else {
+        Copy-Item $src $dest -Recurse
+        $copied++
+        Write-Host "  Installed: $dir"
+    }
 }
 
-# Copy skill.json for discovery (junctions don't work for single files)
-$skillJsonSrc = Join-Path $RepoDir "skill.json"
-$skillJsonDest = Join-Path $SkillsDir "wayfinder-openclaw-skill.json"
-if (-not (Test-Path $skillJsonDest)) {
-    Copy-Item $skillJsonSrc $skillJsonDest
-    Write-Host "  Copied: skill.json -> $skillJsonDest"
-}
+# Copy skill.json for discovery
+Copy-Item (Join-Path $RepoDir "skill.json") (Join-Path $SkillsDir "wayfinder-openclaw-skill.json") -Force
 
 Write-Host ""
-Write-Host "Done. $linked new links, $skipped already up to date."
+Write-Host "Done. $copied new, $updated updated."
 Write-Host ""
 
 Write-Host "Installed $($skillDirs.Count) skill domains:"

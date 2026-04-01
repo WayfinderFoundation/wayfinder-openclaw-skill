@@ -29,7 +29,7 @@ cd wayfinder-openclaw-skill
 
 ## Update
 
-Re-run the install script — it pulls latest and updates links automatically:
+Re-run the install script — it pulls latest and copies updated skill files:
 
 ```bash
 # macOS / Linux
@@ -68,7 +68,7 @@ git clone https://github.com/WayfinderFoundation/wayfinder-openclaw-skill.git
 cd wayfinder-openclaw-skill; .\install.ps1
 ```
 
-The installer will skip any existing real directories it finds, so you must remove the old `wayfinder` folder before it can create the new symlink.
+The installer will replace the old single-directory layout with the new per-domain structure.
 
 ## Skills
 

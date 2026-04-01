@@ -160,6 +160,7 @@
         "lending-protocols/references/euler-v2.md",
         "lending-protocols/references/hyperlend.md",
         "lending-protocols/references/ethena-vault.md",
+        "aave/references/aave-v3.md",
         "lending-protocols/references/errors.md"
       ]
     },
