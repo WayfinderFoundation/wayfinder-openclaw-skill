@@ -56,10 +56,10 @@ poetry run wayfinder resource wayfinder://delta-lab/symbols
 | `wayfinder://hyperliquid/prices/{coin}` | Mid price for a single coin |
 | `wayfinder://hyperliquid/book/{coin}` | Order book for a coin |
 | `wayfinder://contracts/{chain_id}/{address}` | Get deployed contract metadata + ABI (local artifacts) |
-| `wayfinder://delta-lab/{symbol}/basis` | Delta Lab: map an asset symbol to its basis group/root symbol (see `references/delta-lab.md`) |
-| `wayfinder://delta-lab/{symbol}/timeseries/{series}/{lookback_days}/{limit}` | Delta Lab: timeseries snapshot for one symbol + series (see `references/delta-lab.md`) |
+| `wayfinder://delta-lab/{symbol}/basis` | Delta Lab: map an asset symbol to its basis group/root symbol (see `../delta-lab/SKILL.md`) |
+| `wayfinder://delta-lab/{symbol}/timeseries/{series}/{lookback_days}/{limit}` | Delta Lab: timeseries snapshot for one symbol + series (see `../delta-lab/SKILL.md`) |
 
-**Delta Lab market screens:** see `references/delta-lab.md` (asset lookup + price/perp/lending/borrow-route screens).
+**Delta Lab market screens:** see `../delta-lab/SKILL.md` (asset lookup + price/perp/lending/borrow-route screens).
 
 **Token lookup order — always search or use gas endpoint first:**
 

@@ -75,7 +75,7 @@ poetry run wayfinder execute --kind swap --wallet_label main --from_token usd-co
 
 Use this only when the user explicitly wants CEX data/trading and has API credentials configured in `config.json` under `ccxt`. For Hyperliquid, prefer the native Hyperliquid tools/adapters unless the user explicitly asks for CCXT.
 
-See [ccxt.md](ccxt.md) for setup + examples.
+See [ccxt.md](../../other-protocols/references/ccxt.md) for setup + examples.
 
 ### Boros Adapter (`boros_adapter`)
 
@@ -86,7 +86,7 @@ See [ccxt.md](ccxt.md) for setup + examples.
 
 Provides fixed-rate market discovery, quoting, orderbook data, deposits, withdrawals, position management, and HYPE OFT bridging on Boros.
 
-See [boros.md](boros.md) for details.
+See [boros.md](../../other-protocols/references/boros.md) for details.
 
 ### HyperLend Adapter (`hyperlend_adapter`)
 
@@ -97,7 +97,7 @@ See [boros.md](boros.md) for details.
 
 Provides stable market snapshots, rate history, all-markets discovery, lending/borrowing, and collateral management on HyperLend.
 
-See [hyperlend.md](hyperlend.md) for details.
+See [hyperlend.md](../../lending-protocols/references/hyperlend.md) for details.
 
 ### Aave V3 Adapter (`aave_v3_adapter`)
 
@@ -108,7 +108,7 @@ See [hyperlend.md](hyperlend.md) for details.
 
 Read Aave V3 markets and user positions across supported chains, and execute supply/withdraw/borrow/repay/collateral/rewards flows.
 
-See [aave-v3.md](aave-v3.md) for details.
+See [aave-v3.md](../../aave/references/aave-v3.md) for details.
 
 ### Morpho Adapter (`morpho_adapter`)
 
@@ -119,7 +119,7 @@ See [aave-v3.md](aave-v3.md) for details.
 
 Market discovery + position reads for Morpho Blue, MetaMorpho vault discovery, rewards (Merkl + URD), and execution flows.
 
-See [morpho.md](morpho.md) for details.
+See [morpho.md](../../lending-protocols/references/morpho.md) for details.
 
 ### Euler v2 Adapter (`euler_v2_adapter`)
 
@@ -130,7 +130,7 @@ See [morpho.md](morpho.md) for details.
 
 Euler v2 markets are vaults (the vault address is also the ERC-4626 share token). Execution uses EVC batching.
 
-See [euler-v2.md](euler-v2.md) for details.
+See [euler-v2.md](../../lending-protocols/references/euler-v2.md) for details.
 
 ### Avantis Adapter (`avantis_adapter`)
 
@@ -141,7 +141,7 @@ See [euler-v2.md](euler-v2.md) for details.
 
 ERC-4626 vault integration for depositing USDC into the Avantis avUSDC vault (Base) and redeeming shares back to USDC.
 
-See [avantis.md](avantis.md) for details.
+See [avantis.md](../../other-protocols/references/avantis.md) for details.
 
 ### Ethena Vault Adapter (`ethena_vault_adapter`)
 
@@ -152,7 +152,7 @@ See [avantis.md](avantis.md) for details.
 
 Stake USDe into the canonical sUSDe vault and withdraw via cooldown → claim.
 
-See [ethena-vault.md](ethena-vault.md) for details.
+See [ethena-vault.md](../../lending-protocols/references/ethena-vault.md) for details.
 
 ### Lido Adapter (`lido_adapter`)
 
@@ -163,7 +163,7 @@ See [ethena-vault.md](ethena-vault.md) for details.
 
 Stake ETH → stETH, wrap/unwrap, and manage async withdrawal requests/claims.
 
-See [lido.md](lido.md) for details.
+See [lido.md](../../lido/references/lido.md) for details.
 
 ### EigenCloud Adapter (`eigencloud_adapter`)
 
@@ -174,7 +174,7 @@ See [lido.md](lido.md) for details.
 
 Restaking + delegation + queued withdrawals + rewards claiming (claim structs are offchain-prepared).
 
-See [eigencloud.md](eigencloud.md) for details.
+See [eigencloud.md](../../other-protocols/references/eigencloud.md) for details.
 
 ### Hyperliquid Adapter (`hyperliquid_adapter`)
 
@@ -185,7 +185,7 @@ See [eigencloud.md](eigencloud.md) for details.
 
 Comprehensive Hyperliquid integration for perp/spot state, funding rates, mid prices, order books, candles, market/limit/trigger orders, leverage, isolated margin, HyperCore→HyperEVM transfers, deposits, and withdrawals.
 
-See [hyperliquid.md](hyperliquid.md) for details.
+See [hyperliquid.md](../../hyperliquid/references/hyperliquid.md) for details.
 
 ### Polymarket Adapter (`polymarket_adapter`)
 
@@ -210,7 +210,7 @@ poetry run wayfinder polymarket_execute --action bridge_deposit --wallet_label m
 poetry run wayfinder polymarket_execute --action buy --wallet_label main --market_slug "some-market" --outcome YES --amount_usdc 2
 ```
 
-See [polymarket.md](polymarket.md) for details.
+See [polymarket.md](../../polymarket/references/polymarket.md) for details.
 
 ### Ledger Adapter (`ledger_adapter`)
 
@@ -238,7 +238,7 @@ Full Moonwell integration including lending (supply/withdraw), borrowing (borrow
 | WETH | `0x628ff693426583D9a7FB391E54366292F509D457` | `0x4200000000000000000000000000000000000006` |
 | wstETH | `0x627Fe393Bc6EdDA28e99AE648fD6fF362514304b` | `0xc1CBa3fCea344f92D9239c08C0568f6F2F0ee452` |
 
-See [moonwell.md](moonwell.md) for details.
+See [moonwell.md](../../lending-protocols/references/moonwell.md) for details.
 
 ### Multicall Adapter (`multicall_adapter`)
 
@@ -258,7 +258,7 @@ Batches multiple on-chain read calls into a single RPC request for efficiency.
 
 Comprehensive Pendle integration for PT/YT market discovery, historical metrics, execution planning, swap quotes, and limit orders via the Pendle Hosted SDK.
 
-See [pendle.md](pendle.md) for details.
+See [pendle.md](../../other-protocols/references/pendle.md) for details.
 
 ### Uniswap Adapter (`uniswap_adapter`)
 
@@ -269,7 +269,7 @@ See [pendle.md](pendle.md) for details.
 
 Provides Uniswap V3 LP position reads and liquidity/fee management.
 
-See [uniswap.md](uniswap.md) for details.
+See [uniswap.md](../../other-protocols/references/uniswap.md) for details.
 
 ### ProjectX Adapter (`projectx_adapter`)
 
@@ -280,7 +280,7 @@ See [uniswap.md](uniswap.md) for details.
 
 Provides concentrated liquidity reads and execution on ProjectX, plus exact-in swaps.
 
-See [projectx.md](projectx.md) for details.
+See [projectx.md](../../other-protocols/references/projectx.md) for details.
 
 ### Pool Adapter (`pool_adapter`)
 

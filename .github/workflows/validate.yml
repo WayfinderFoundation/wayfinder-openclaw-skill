@@ -20,7 +20,7 @@ jobs:
       - name: Read pinned SDK version
         id: sdk-version
         run: |
-          SDK_COMMIT=$(cat wayfinder-openclaw/sdk-version.md | tr -d '[:space:]')
+          SDK_COMMIT=$(cat wayfinder-openclaw/wayfinder/sdk-version.md | tr -d '[:space:]')
           echo "commit=$SDK_COMMIT" >> "$GITHUB_OUTPUT"
           echo "Pinned SDK ref: $SDK_COMMIT"
 
@@ -151,14 +151,14 @@ jobs:
             exit 1
           fi
 
-  validate-agent-skill:
+  validate-skill-structure:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout wayfinder-openclaw
         uses: actions/checkout@v4
 
-      - name: Validate skill.json structure
+      - name: Validate top-level skill.json structure
         run: |
           echo "=== Validating skill.json structure ==="
 
@@ -168,8 +168,8 @@ jobs:
             exit 1
           fi
 
-          # Check required fields exist
-          REQUIRED_FIELDS=("name" "version" "description" "entry" "commands")
+          # Check required top-level fields
+          REQUIRED_FIELDS=("name" "version" "description" "entry" "skills")
           for field in "${REQUIRED_FIELDS[@]}"; do
             if ! jq -e ".$field" skill.json > /dev/null 2>&1; then
               echo "ERROR: Required field '$field' missing from skill.json"
@@ -177,76 +177,173 @@ jobs:
             fi
           done
 
-          echo "✓ skill.json has valid structure with all required fields"
+          echo "✓ skill.json has valid structure with all required top-level fields"
 
-      - name: Validate entry point exists
+      - name: Validate top-level entry point
         run: |
-          echo "=== Validating entry point ==="
           ENTRY=$(jq -r '.entry' skill.json)
           if [ ! -f "$ENTRY" ]; then
-            echo "ERROR: Entry point '$ENTRY' does not exist"
+            echo "ERROR: Top-level entry point '$ENTRY' does not exist"
             exit 1
           fi
-          echo "✓ Entry point '$ENTRY' exists"
+          echo "✓ Top-level entry point '$ENTRY' exists"
 
-      - name: Validate references exist
+      - name: Validate nested skill definitions
         run: |
-          echo "=== Validating references ==="
-          REFERENCES=$(jq -r '.references[]?' skill.json 2>/dev/null)
-          if [ -z "$REFERENCES" ]; then
-            echo "No references defined, skipping"
-            exit 0
-          fi
+          echo "=== Validating nested skills ==="
+          ERRORS=0
+          SKILL_COUNT=$(jq '.skills | length' skill.json)
 
-          MISSING=0
-          while IFS= read -r ref; do
-            if [ ! -f "$ref" ]; then
-              echo "ERROR: Reference '$ref' does not exist"
-              MISSING=1
-            else
-              echo "✓ Reference '$ref' exists"
+          for i in $(seq 0 $(($SKILL_COUNT - 1))); do
+            SKILL_NAME=$(jq -r ".skills[$i].name" skill.json)
+            SKILL_ENTRY=$(jq -r ".skills[$i].entry" skill.json)
+            SKILL_DESC=$(jq -r ".skills[$i].description" skill.json)
+
+            echo ""
+            echo "--- Checking skill: $SKILL_NAME ---"
+
+            # Check required fields
+            if [ "$SKILL_NAME" = "null" ] || [ -z "$SKILL_NAME" ]; then
+              echo "ERROR: Skill at index $i is missing 'name'"
+              ERRORS=1
+              continue
             fi
-          done <<< "$REFERENCES"
 
-          if [ $MISSING -eq 1 ]; then
+            if [ "$SKILL_ENTRY" = "null" ] || [ -z "$SKILL_ENTRY" ]; then
+              echo "ERROR: Skill '$SKILL_NAME' is missing 'entry'"
+              ERRORS=1
+              continue
+            fi
+
+            if [ "$SKILL_DESC" = "null" ] || [ -z "$SKILL_DESC" ]; then
+              echo "ERROR: Skill '$SKILL_NAME' is missing 'description'"
+              ERRORS=1
+            fi
+
+            # Check entry point exists
+            if [ ! -f "$SKILL_ENTRY" ]; then
+              echo "ERROR: Entry point '$SKILL_ENTRY' for skill '$SKILL_NAME' does not exist"
+              ERRORS=1
+            else
+              echo "✓ Entry point '$SKILL_ENTRY' exists"
+            fi
+
+            # Check references exist
+            REF_COUNT=$(jq ".skills[$i].references | length" skill.json)
+            for j in $(seq 0 $(($REF_COUNT - 1))); do
+              REF=$(jq -r ".skills[$i].references[$j]" skill.json)
+              if [ ! -f "$REF" ]; then
+                echo "ERROR: Reference '$REF' for skill '$SKILL_NAME' does not exist"
+                ERRORS=1
+              else
+                echo "✓ Reference '$REF' exists"
+              fi
+            done
+          done
+
+          echo ""
+          echo "=== Validated $SKILL_COUNT nested skills ==="
+
+          if [ $ERRORS -eq 1 ]; then
+            echo "ERROR: One or more nested skill validation checks failed"
             exit 1
           fi
+          echo "✓ All nested skills are valid"
+
+  build-skill-matrix:
+    runs-on: ubuntu-latest
+    needs: validate-skill-structure
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - name: Checkout wayfinder-openclaw
+        uses: actions/checkout@v4
+
+      - name: Build dynamic matrix from skill.json
+        id: set-matrix
+        run: |
+          MATRIX=$(jq -c '[.skills | to_entries[] | {skill_index: .key, skill_name: .value.name}]' skill.json)
+          echo "matrix={\"include\":$MATRIX}" >> "$GITHUB_OUTPUT"
+          echo "Generated matrix: $MATRIX"
+
+  validate-each-skill-domain:
+    runs-on: ubuntu-latest
+    needs: build-skill-matrix
+
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.build-skill-matrix.outputs.matrix) }}
+
+    steps:
+      - name: Checkout wayfinder-openclaw
+        uses: actions/checkout@v4
+
+      - name: Identify skill
+        id: skill-info
+        run: |
+          SKILL_NAME=$(jq -r ".skills[${{ matrix.skill_index }}].name" skill.json)
+          SKILL_ENTRY=$(jq -r ".skills[${{ matrix.skill_index }}].entry" skill.json)
+          SKILL_DIR=$(dirname "$SKILL_ENTRY")
+
+          echo "name=$SKILL_NAME" >> "$GITHUB_OUTPUT"
+          echo "entry=$SKILL_ENTRY" >> "$GITHUB_OUTPUT"
+          echo "dir=$SKILL_DIR" >> "$GITHUB_OUTPUT"
+          echo "Validating skill: $SKILL_NAME (entry: $SKILL_ENTRY, dir: $SKILL_DIR)"
 
       - name: Install Claude Code CLI
         run: npm install -g @anthropic-ai/claude-code
 
-      - name: Run agent skill validation
+      - name: Validate skill domain
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          SKILL_NAME: ${{ steps.skill-info.outputs.name }}
+          SKILL_ENTRY: ${{ steps.skill-info.outputs.entry }}
+          SKILL_DIR: ${{ steps.skill-info.outputs.dir }}
         run: |
+          # Gather reference files for context
+          REFS=$(jq -r ".skills[${{ matrix.skill_index }}].references[]?" skill.json | tr '\n' ',' | sed 's/,$//')
+          SKILL_DESC=$(jq -r ".skills[${{ matrix.skill_index }}].description" skill.json)
+
           claude --print --dangerously-skip-permissions "
-          You are validating the agent skill definition for the wayfinder OpenClaw skill.
+          You are validating the '$SKILL_NAME' skill domain within the wayfinder-openclaw skill suite.
 
-          Validate the following aspects of the skill:
+          Skill details:
+          - Name: $SKILL_NAME
+          - Entry point: $SKILL_ENTRY
+          - Directory: $SKILL_DIR
+          - Description: $SKILL_DESC
+          - Reference files: $REFS
 
-          1. **skill.json** - Located at wayfinder/skill.json
-             - Check that all commands listed are documented in SKILL.md
-             - Check that all resources (static and templates) are documented in SKILL.md
-             - Verify the version follows semver format
+          Top-level skill.json is at: skill.json
 
-          2. **SKILL.md** - Located at wayfinder/SKILL.md
-             - Verify all commands have proper documentation sections
-             - Check that parameter tables are complete for each command
-             - Verify error codes are documented
-             - Check that examples are provided for each command
+          Please validate this specific skill domain by checking:
 
-          3. **References** - Located in wayfinder/references/
-             - Verify each reference file listed in skill.json exists and has content
-             - Check that strategies and adapters referenced in SKILL.md are documented in references
+          1. **SKILL.md completeness** (at $SKILL_ENTRY)
+             - Has a clear description of the skill's purpose and domain
+             - Documents all commands/operations available in this domain
+             - Includes parameter tables with types and descriptions
+             - Provides usage examples
+             - Documents error handling
 
-          4. **Cross-validation**
-             - Commands in skill.json must have corresponding sections in SKILL.md
-             - Resources in skill.json must be documented with usage examples
-             - No orphaned documentation (documented features that don't exist in skill.json)
+          2. **Reference file quality** (in $SKILL_DIR/references/)
+             - All reference files listed in skill.json exist and have content
+             - References are relevant to this skill's domain
+             - No broken internal links or references to non-existent files
+             - Reference content aligns with SKILL.md documentation
+
+          3. **Domain coherence**
+             - The skill's description accurately reflects what SKILL.md documents
+             - Commands/resources claimed in skill.json are actually covered in the documentation
+             - No overlap confusion: the skill stays within its domain boundary
+             - The entry point SKILL.md provides sufficient context for an AI agent to use this skill
+
+          4. **Cross-reference with skill.json**
+             - Any commands listed in the top-level skill.json 'commands' array that belong to this domain are documented
+             - Any resources (static or templates) relevant to this domain are mentioned
 
           Classify each issue by severity:
-          - CRITICAL: Missing commands, broken references, or structural errors that break the skill
-          - MAJOR: Significant parameter mismatches, missing documentation sections, or wrong types
+          - CRITICAL: Missing entry point, broken references, or documentation that would prevent an agent from using this skill
+          - MAJOR: Significant gaps in documentation, wrong parameters, or misleading descriptions
           - MINOR: Cosmetic issues, slightly outdated descriptions, formatting inconsistencies
 
           Output a structured report with:
@@ -254,21 +351,21 @@ jobs:
              - 'VALIDATION_RESULT: PASS' if no issues found
              - 'VALIDATION_RESULT: WARN' if only MINOR issues found
              - 'VALIDATION_RESULT: FAIL' if any CRITICAL or MAJOR issues found
-          2. Detailed findings for each category with severity labels
+          2. Detailed findings with severity labels
           3. Recommendations if any issues found
-          " | tee skill-validation-output.txt
+          " | tee "skill-validation-${SKILL_NAME}.txt"
 
-          # Check if validation passed or failed (WARN is acceptable)
-          if grep -q "VALIDATION_RESULT: FAIL" skill-validation-output.txt; then
-            echo "::error::Agent skill validation failed - see report above for details"
+          # Check result
+          if grep -q "VALIDATION_RESULT: FAIL" "skill-validation-${SKILL_NAME}.txt"; then
+            echo "::error::Skill '$SKILL_NAME' validation failed - see report above"
             exit 1
-          elif grep -q "VALIDATION_RESULT: WARN" skill-validation-output.txt; then
-            echo "::warning::Agent skill validation passed with minor issues - see report above"
+          elif grep -q "VALIDATION_RESULT: WARN" "skill-validation-${SKILL_NAME}.txt"; then
+            echo "::warning::Skill '$SKILL_NAME' validation passed with minor issues"
             exit 0
-          elif grep -q "VALIDATION_RESULT: PASS" skill-validation-output.txt; then
-            echo "Agent skill validation passed"
+          elif grep -q "VALIDATION_RESULT: PASS" "skill-validation-${SKILL_NAME}.txt"; then
+            echo "Skill '$SKILL_NAME' validation passed"
             exit 0
           else
-            echo "::warning::Could not determine validation result - treating as failure"
+            echo "::warning::Could not determine validation result for '$SKILL_NAME' - treating as failure"
             exit 1
           fi

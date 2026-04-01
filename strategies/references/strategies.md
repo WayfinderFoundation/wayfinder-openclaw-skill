@@ -138,6 +138,43 @@ The position is **delta-neutral**: WETH debt offsets wstETH collateral, so PnL i
 poetry run wayfinder run_strategy --strategy moonwell_wsteth_loop_strategy --action status
 ```
 
+### Multi-Vault Split (`multi_vault_split_strategy`)
+
+- **Status**: `stable`
+- **Module**: `wayfinder_paths.strategies.multi_vault_split_strategy.strategy.MultiVaultSplitStrategy`
+- **Chains**: Arbitrum (42161), Base (8453), Hyperliquid
+- **Token**: USDC (Arbitrum)
+- **Risk**: Low-Medium
+
+Diversified stablecoin allocation across three market-neutral vault legs:
+- **HLP** — Hyperliquid Liquidity Pool vault yield
+- **Boros** — Fixed-rate AMM vaults on Arbitrum (USDT collateral)
+- **Avantis** — avUSDC ERC-4626 vault on Base
+
+Capital is split using a configurable allocation mode: `hybrid_apy` (default, 50% equal-weight + 50% APY-weighted) or `fixed` (user-specified weights).
+
+**Entry Flow**: USDC on Arbitrum → split and bridge to each leg (Avantis via BRAP to Base, HLP via Hyperliquid bridge, Boros via USDC→USDT swap on Arbitrum).
+
+**Exit Flow**: Unwind all legs → bridge back to Arbitrum USDC → transfer to main wallet. HLP has a withdrawal cooldown; Boros is two-step (request → cooldown → finalize).
+
+**Key Parameters**:
+| Parameter | Value | Description |
+|-----------|-------|-------------|
+| `MIN_NET_DEPOSIT` | 40 USDC | Minimum deposit amount |
+| `MIN_HLP_USD` | 11 | Minimum HLP leg size |
+| `MIN_BOROS_USD` | 11 | Minimum Boros leg size |
+| `allocation_mode` | `hybrid_apy` | Weighting strategy (`hybrid_apy` or `fixed`) |
+| `gas_maximum` | 0.02 ETH | Max gas per transaction |
+| `gas_threshold` | 0.003 ETH | Min gas to proceed |
+
+**Adapters Used**: BALANCE, LEDGER, TOKEN, HYPERLIQUID, BOROS, AVANTIS, BRAP
+
+```bash
+poetry run wayfinder run_strategy --strategy multi_vault_split_strategy --action status
+poetry run wayfinder run_strategy --strategy multi_vault_split_strategy --action analyze --amount_usdc 500
+poetry run wayfinder run_strategy --strategy multi_vault_split_strategy --action deposit --main_token_amount 200 --gas_token_amount 0.01
+```
+
 ### Stablecoin Yield (`stablecoin_yield_strategy`)
 
 - **Status**: `wip` (work in progress)
